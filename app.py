@@ -44,11 +44,11 @@ def opr():
     entries = []
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
-            reader = csv.reader(f)
-            for row in reader:
-                if len(row) >= 2:
-                    timestamp, description = row[0], row[1]
-                    entries.append({"timestamp": timestamp, "description": description})
+            data = json.load(f)
+            for entry in data:
+                timestamp = entry.get("timestamp", "Missing")
+                description = entry.get("description", "Missing")
+                entries.append({"timestamp": timestamp, "description": description})
     return render_template("opr.html", entries=entries)
 
 
