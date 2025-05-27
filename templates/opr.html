@@ -9,7 +9,7 @@ andon-app/templates/opr.html
     <p>Total Andon Presses: {{ count }}</p>
     <ul>
   {% for entry in entries %}
-    <li><strong>{{ entry.timestamp }}</strong> — {{ entry.description }}</li>
+    <li><strong>{{ entry['timestamp'] }}</strong> — {{ entry['description'] }}</li>
   {% endfor %}
 </ul>
     <a href="/">Back</a>
