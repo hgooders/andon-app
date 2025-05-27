@@ -58,21 +58,21 @@ def opr():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
-           for entry in data:
-    reason = entry.get("reason", "Missing")
-    name = entry.get("name", "Missing")
-    stopped_time = entry.get("stopped_time", "0")
-    timestamp = entry.get("timestamp", "Missing")
-    entries.append({
-        "reason": reason,
-        "name": name,
-        "stopped_time": stopped_time,
-        "timestamp": timestamp
-    })
-
+            for entry in data:
+                reason = entry.get("reason", "Missing")
+                name = entry.get("name", "Missing")
+                stopped_time = entry.get("stopped_time", "0")
+                timestamp = entry.get("timestamp", "Missing")
+                entries.append({
+                    "reason": reason,
+                    "name": name,
+                    "stopped_time": stopped_time,
+                    "timestamp": timestamp
+                })
                 reason_counts[reason] = reason_counts.get(reason, 0) + 1
 
     return render_template("opr.html", entries=entries, reasons=reason_counts)
+
 
 
 
