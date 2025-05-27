@@ -5,12 +5,17 @@ andon-app/templates/home.html
     <title>Andon</title>
 </head>
 <body>
-  <h1>Andon System</h1>
+ <h1>Andon System</h1>
+
 <form method="POST" action="/andon">
-  <label for="description">Description:</label><br>
-  <input type="text" id="description" name="description" placeholder="e.g. Machine jammed" required>
-  <br><br>
+  <label for="reason">Reason:</label><br>
+  <input type="text" id="reason" name="reason" required><br><br>
+
+  <label for="name">Your Name:</label><br>
+  <input type="text" id="name" name="name" required><br><br>
+
   <button type="submit">Andon</button>
 </form>
+
 </body>
 </html>
