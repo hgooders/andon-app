@@ -14,20 +14,23 @@
   </ul>
 
   <h2>All Andon Presses</h2>
-  <table border="1">
+ <table border="1">
+  <tr>
+    <th>Reason</th>
+    <th>Name</th>
+    <th>Time Stopped (min)</th>
+    <th>Timestamp</th>
+  </tr>
+  {% for entry in entries %}
     <tr>
-      <th>Reason</th>
-      <th>Name</th>
-      <th>Time</th>
+      <td>{{ entry.reason }}</td>
+      <td>{{ entry.name }}</td>
+      <td>{{ entry.stopped_time }}</td>
+      <td>{{ entry.timestamp }}</td>
     </tr>
-    {% for entry in entries %}
-      <tr>
-        <td>{{ entry.reason }}</td>
-        <td>{{ entry.name }}</td>
-        <td>{{ entry.timestamp }}</td>
-      </tr>
-    {% endfor %}
-  </table>
+  {% endfor %}
+</table>
+
 
   <br>
   <a href="/">Back</a>
