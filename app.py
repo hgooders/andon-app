@@ -10,12 +10,16 @@ if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, 'w') as f:
         json.dump([], f)
 
-def log_andon():
+def log_andon(description):
     with open(DATA_FILE, 'r+') as f:
         data = json.load(f)
-        data.append({"timestamp": datetime.now().isoformat()})
+        data.append({
+            "timestamp": datetime.now().isoformat(),
+            "description": description
+        })
         f.seek(0)
         json.dump(data, f, indent=2)
+
 
 def get_andon_data():
     with open(DATA_FILE) as f:
@@ -25,10 +29,14 @@ def get_andon_data():
 def home():
     return render_template('home.html')
 
+from flask import request  # Make sure this is already imported at the top
+
 @app.route('/andon', methods=['POST'])
 def andon():
-    log_andon()
+    description = request.form['description']
+    log_andon(description)
     return redirect(url_for('opr'))
+
 
 @app.route("/opr")
 def opr():
