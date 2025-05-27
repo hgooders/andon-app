@@ -78,3 +78,8 @@ def opr():
 
 if __name__ == '__main__':
     app.run()
+@app.route("/reset", methods=["POST"])
+def reset():
+    with open(DATA_FILE, "w") as f:
+        f.write("[]")  # Clears all data
+    return redirect(url_for("opr"))
