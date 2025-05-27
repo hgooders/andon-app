@@ -35,12 +35,14 @@ def home():
 
 from flask import request  # Make sure this is already imported at the top
 
+
 @app.route('/andon', methods=['POST'])
 def andon():
     reason = request.form['reason']
     name = request.form['name']
+    stopped_time = request.form['stopped_time']
     timestamp = datetime.now().isoformat()
-    log_andon(reason, name, timestamp)
+    log_andon(reason, name, stopped_time, timestamp)
     return redirect(url_for('opr'))
 
 
