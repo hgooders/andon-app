@@ -46,11 +46,12 @@ def opr():
         with open(DATA_FILE, "r") as f:
             reader = csv.reader(f)
             for row in reader:
-    if len(row) >= 2:
-        timestamp, description = row[0], row[1]
-        entries.append({"timestamp": timestamp, "description": description})
-
+                if len(row) >= 2:
+                    timestamp, description = row[0], row[1]
+                    entries.append({"timestamp": timestamp, "description": description})
     return render_template("opr.html", entries=entries)
+
+
 
 if __name__ == '__main__':
     app.run()
