@@ -8,10 +8,10 @@ andon-app/templates/opr.html
     <h1>Operational Performance Report</h1>
     <p>Total Andon Presses: {{ count }}</p>
     <ul>
-        {% for entry in data %}
-            <li>{{ entry.timestamp }}</li>
-        {% endfor %}
-    </ul>
+  {% for entry in entries %}
+    <li><strong>{{ entry.timestamp }}</strong> — {{ entry.description }}</li>
+  {% endfor %}
+</ul>
     <a href="/">Back</a>
 </body>
 </html>
