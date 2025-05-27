@@ -30,10 +30,17 @@ def andon():
     log_andon()
     return redirect(url_for('opr'))
 
-@app.route('/opr')
+@app.route("/opr")
 def opr():
-    data = get_andon_data()
-    return render_template('opr.html', data=data, count=len(data))
+    entries = []
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if len(row) >= 2:
+                    timestamp, description = row[0], row[1]
+                    entries.append({"timestamp": timestamp, "description": description})
+    return render_template("opr.html", entries=entries)
 
 if __name__ == '__main__':
     app.run()
