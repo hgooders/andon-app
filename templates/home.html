@@ -5,7 +5,8 @@ andon-app/templates/home.html
     <title>Andon</title>
 </head>
 <body>
- <h1>Andon System</h1>
+
+<h1>Andon System</h1>
 
 <form method="POST" action="/andon">
   <label for="reason">Reason:</label><br>
@@ -14,8 +15,12 @@ andon-app/templates/home.html
   <label for="name">Your Name:</label><br>
   <input type="text" id="name" name="name" required><br><br>
 
+  <label for="stopped_time">Time Stopped (minutes):</label><br>
+  <input type="number" id="stopped_time" name="stopped_time" min="0" required><br><br>
+
   <button type="submit">Andon</button>
 </form>
+
 
 </body>
 </html>
