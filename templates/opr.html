@@ -6,12 +6,21 @@
 <body>
   <h1>Operational Performance Report</h1>
 
+  <h2>Most Common Reasons</h2>
+  <ul>
+    {% for reason, count in reasons.items() %}
+      <li>{{ reason }}: {{ count }}</li>
+    {% endfor %}
+  </ul>
+
+  <h2>All Andon Presses</h2>
   <ul>
     {% for entry in entries %}
-     <li><strong>{{ entry.timestamp }}</strong> — {{ entry.description }}</li>
+      <li><strong>{{ entry.timestamp }}</strong> — {{ entry.description }}</li>
     {% endfor %}
   </ul>
 
   <a href="/">Back</a>
 </body>
 </html>
+
