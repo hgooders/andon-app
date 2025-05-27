@@ -1,18 +1,17 @@
-andon-app/templates/opr.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>OPR</title>
+  <title>OPR</title>
 </head>
 <body>
-    <h1>Operational Performance Report</h1>
-    <p>Total Andon Presses: {{ count }}</p>
-  <ul>
-  {% for entry in entries %}
-    <li><strong>{{ entry.timestamp }}</strong> — {{ entry.description }}</li>
-  {% endfor %}
-</ul>
+  <h1>Operational Performance Report</h1>
 
-    <a href="/">Back</a>
+  <ul>
+    {% for entry in entries %}
+      <li><strong>{{ entry.timestamp }}</strong> — {{ entry.description }}</li>
+    {% endfor %}
+  </ul>
+
+  <a href="/">Back</a>
 </body>
 </html>
