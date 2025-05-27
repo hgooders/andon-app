@@ -8,6 +8,13 @@ andon-app/templates/home.html
     <h1>Andon System</h1>
     <form action="/andon" method="post">
         <button type="submit">Andon</button>
-    </form>
+    <h1>Andon System</h1>
+
+<form method="POST" action="/">
+  <label for="description">Description:</label><br>
+  <input type="text" id="description" name="description" placeholder="e.g. Machine jammed" required>
+  <br><br>
+  <button type="submit">Andon</button>
+</form>
 </body>
 </html>
