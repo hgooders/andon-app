@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OPR</title>
+</head>
+<body>
+    <h1>Operational Performance Report</h1>
+    <p>Total Andon Presses: {{ count }}</p>
+    <ul>
+        {% for entry in data %}
+            <li>{{ entry.timestamp }}</li>
+        {% endfor %}
+    </ul>
+    <a href="/">Back</a>
+</body>
+</html>
