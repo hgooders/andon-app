@@ -11,15 +11,18 @@ if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, 'w') as f:
         json.dump([], f)
 
-def log_andon(description):
+def log_andon(reason, name, timestamp):
     with open(DATA_FILE, 'r+') as f:
         data = json.load(f)
         data.append({
-            "timestamp": datetime.now().isoformat(),
-            "description": description
+            "reason": reason,
+            "name": name,
+            "timestamp": timestamp
         })
         f.seek(0)
         json.dump(data, f, indent=2)
+
+
 
 
 def get_andon_data():
@@ -34,9 +37,12 @@ from flask import request  # Make sure this is already imported at the top
 
 @app.route('/andon', methods=['POST'])
 def andon():
-    description = request.form['description']
-    log_andon(description)
+    reason = request.form['reason']
+    name = request.form['name']
+    timestamp = datetime.now().isoformat()
+    log_andon(reason, name, timestamp)
     return redirect(url_for('opr'))
+
 
 
 @app.route("/opr")
