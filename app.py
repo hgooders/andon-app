@@ -41,8 +41,8 @@ def andon():
 @app.route("/opr")
 def opr():
     entries = []
-    if os.path.exists(LOG_FILE):
-        with open(LOG_FILE, "r") as f:
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
             reader = csv.reader(f)
             for row in reader:
                 if len(row) >= 2:
