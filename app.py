@@ -54,18 +54,17 @@ def opr():
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
             for entry in data:
+                reason = entry.get("reason", "Missing")
+                name = entry.get("name", "Missing")
                 timestamp = entry.get("timestamp", "Missing")
-                description = entry.get("description", "Missing")
-                entries.append({"timestamp": timestamp, "description": description})
-
-                # Count how many times each description appears
-                if description in reason_counts:
-                    reason_counts[description] += 1
-                else:
-                    reason_counts[description] = 1
+                entries.append({
+                    "reason": reason,
+                    "name": name,
+                    "timestamp": timestamp
+                })
+                reason_counts[reason] = reason_counts.get(reason, 0) + 1
 
     return render_template("opr.html", entries=entries, reasons=reason_counts)
-
 
 
 
