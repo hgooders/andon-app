@@ -42,6 +42,8 @@ def andon():
 @app.route("/opr")
 def opr():
     entries = []
+    reason_counts = {}
+
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
@@ -49,7 +51,15 @@ def opr():
                 timestamp = entry.get("timestamp", "Missing")
                 description = entry.get("description", "Missing")
                 entries.append({"timestamp": timestamp, "description": description})
-    return render_template("opr.html", entries=entries)
+
+                # Count how many times each description appears
+                if description in reason_counts:
+                    reason_counts[description] += 1
+                else:
+                    reason_counts[description] = 1
+
+    return render_template("opr.html", entries=entries, reasons=reason_counts)
+
 
 
 
