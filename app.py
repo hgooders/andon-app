@@ -83,3 +83,9 @@ def reset():
     with open(DATA_FILE, "w") as f:
         f.write("[]")  # Clears all data
     return redirect(url_for("opr"))
+    from flask import send_file  # Make sure this is at the top of the file
+
+@app.route("/download")
+def download():
+    return send_file("andon_log.json", as_attachment=True)
+
