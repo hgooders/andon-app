@@ -14,13 +14,22 @@
   </ul>
 
   <h2>All Andon Presses</h2>
-  <ul>
+  <table border="1">
+    <tr>
+      <th>Reason</th>
+      <th>Name</th>
+      <th>Time</th>
+    </tr>
     {% for entry in entries %}
-      <li><strong>{{ entry.timestamp }}</strong> — {{ entry.description }}</li>
+      <tr>
+        <td>{{ entry.reason }}</td>
+        <td>{{ entry.name }}</td>
+        <td>{{ entry.timestamp }}</td>
+      </tr>
     {% endfor %}
-  </ul>
+  </table>
 
+  <br>
   <a href="/">Back</a>
 </body>
 </html>
-
