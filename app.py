@@ -89,3 +89,35 @@ def reset():
 def download():
     return send_file("andon_log.json", as_attachment=True)
 
+@app.route("/summary")
+def summary():
+    entries = []
+    total_stopped = 0
+
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+            for entry in data:
+                reason = entry.get("reason", "Missing")
+                name = entry.get("name", "Missing")
+                stopped_time = int(entry.get("stopped_time", 0))
+                timestamp = entry.get("timestamp", "Missing")
+                entries.append({
+                    "reason": reason,
+                    "name": name,
+                    "stopped_time": stopped_time,
+                    "timestamp": timestamp
+                })
+                total_stopped += stopped_time
+
+    # Assume full shift is 8 hours = 480 minutes
+    shift_minutes = 480
+    percent_running = round(100 - (total_stopped / shift_minutes * 100), 1)
+    percent_stopped = round((total_stopped / shift_minutes * 100), 1)
+
+    return render_template("summary.html",
+                           entries=entries,
+                           total_stopped=total_stopped,
+                           percent_stopped=percent_stopped,
+                           percent_running=percent_running)
+
