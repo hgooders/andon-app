@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Andon Summary</title>
+</head>
+<body>
+  <h1 style="text-align: center;">Andon Summary</h1>
+
+  <p><strong>Total Time Stopped:</strong> {{ total_stopped }} minutes</p>
+  <p><strong>Percent Stopped:</strong> {{ percent_stopped }}%</p>
+  <p><strong>Percent Running:</strong> {{ percent_running }}%</p>
+
+  <h2>All Andon Entries</h2>
+  <table border="1" style="margin: auto;">
+    <tr>
+      <th>Reason</th>
+      <th>Name</th>
+      <th>Time Stopped (min)</th>
+      <th>Timestamp</th>
+    </tr>
+    {% for entry in entries %}
+    <tr>
+      <td>{{ entry.reason }}</td>
+      <td>{{ entry.name }}</td>
+      <td>{{ entry.stopped_time }}</td>
+      <td>{{ entry.timestamp }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <br>
+  <div style="text-align: center;">
+    <a href="/"><button>Back</button></a>
+  </div>
+</body>
+</html>
