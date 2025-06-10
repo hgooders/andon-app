@@ -94,7 +94,7 @@ def summary():
                 })
                 total_stopped += stopped_time
 
-    shift_minutes = 400  # adjust this if needed
+    shift_minutes = 425  # adjust this if needed
     percent_stopped = round((total_stopped / shift_minutes) * 100, 1)
     percent_running = round(100 - percent_stopped, 1)
 
