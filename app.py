@@ -1,19 +1,32 @@
-from flask import Flask, render_template, redirect, url_for, send_file
-import json
-import csv
+from flask import Flask, render_template, request, redirect, url_for, send_file
 from datetime import datetime
 import os
+import json
 
 app = Flask(__name__)
-DATA_FILE = 'andon_log.json'
+DATA_FILE = "andon_log.json"
 
-if not os.path.exists(DATA_FILE):
-    with open(DATA_FILE, 'w') as f:
-        json.dump([], f)
+# Home page
+@app.route("/")
+def home():
+    return render_template("home.html")
 
+# Handle Andon press
+@app.route("/andon", methods=["POST"])
+def andon():
+    reason = request.form['reason']
+    name = request.form['name']
+    stopped_time = request.form['stopped_time']
+    timestamp = datetime.now().isoformat()
+    log_andon(reason, name, stopped_time, timestamp)
+    return redirect(url_for("opr"))
 
+# Log to JSON file
 def log_andon(reason, name, stopped_time, timestamp):
-    with open(DATA_FILE, 'r+') as f:
+    if not os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "w") as f:
+            json.dump([], f)
+    with open(DATA_FILE, "r+") as f:
         data = json.load(f)
         data.append({
             "reason": reason,
@@ -24,32 +37,7 @@ def log_andon(reason, name, stopped_time, timestamp):
         f.seek(0)
         json.dump(data, f, indent=2)
 
-
-
-
-
-def get_andon_data():
-    with open(DATA_FILE) as f:
-        return json.load(f)
-
-@app.route('/')
-def home():
-    return render_template('home.html')
-
-from flask import request  # Make sure this is already imported at the top
-
-
-@app.route('/andon', methods=['POST'])
-def andon():
-    reason = request.form['reason']
-    name = request.form['name']
-    stopped_time = request.form['stopped_time']
-    timestamp = datetime.now().isoformat()
-    log_andon(reason, name, stopped_time, timestamp)
-    return redirect(url_for('opr'))
-
-
-
+# OPR page
 @app.route("/opr")
 def opr():
     entries = []
@@ -57,7 +45,11 @@ def opr():
 
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
-            data = json.load(f)
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = []
+
             for entry in data:
                 reason = entry.get("reason", "Missing")
                 name = entry.get("name", "Missing")
@@ -73,22 +65,7 @@ def opr():
 
     return render_template("opr.html", entries=entries, reasons=reason_counts)
 
-
-
-
-if __name__ == '__main__':
-    app.run()
-@app.route("/reset", methods=["POST"])
-def reset():
-    with open(DATA_FILE, "w") as f:
-        f.write("[]")  # Clears all data
-    return redirect(url_for("opr"))
-    from flask import send_file  # Make sure this is at the top of the file
-
-@app.route("/download")
-def download():
-    return send_file("andon_log.json", as_attachment=True)
-
+# Summary page
 @app.route("/summary")
 def summary():
     entries = []
@@ -96,11 +73,18 @@ def summary():
 
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
-            data = json.load(f)
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = []
+
             for entry in data:
                 reason = entry.get("reason", "Missing")
                 name = entry.get("name", "Missing")
-                stopped_time = int(entry.get("stopped_time", 0))
+                try:
+                    stopped_time = int(entry.get("stopped_time", 0))
+                except ValueError:
+                    stopped_time = 0
                 timestamp = entry.get("timestamp", "Missing")
                 entries.append({
                     "reason": reason,
@@ -110,10 +94,9 @@ def summary():
                 })
                 total_stopped += stopped_time
 
-    # Assume full shift is 8 hours = 480 minutes
-    shift_minutes = 480
-    percent_running = round(100 - (total_stopped / shift_minutes * 100), 1)
-    percent_stopped = round((total_stopped / shift_minutes * 100), 1)
+    shift_minutes = 480  # adjust this if needed
+    percent_stopped = round((total_stopped / shift_minutes) * 100, 1)
+    percent_running = round(100 - percent_stopped, 1)
 
     return render_template("summary.html",
                            entries=entries,
@@ -121,3 +104,21 @@ def summary():
                            percent_stopped=percent_stopped,
                            percent_running=percent_running)
 
+# Reset data
+@app.route("/reset", methods=["POST"])
+def reset():
+    with open(DATA_FILE, "w") as f:
+        f.write("[]")
+    return redirect(url_for("opr"))
+
+# Download data
+@app.route("/download")
+def download():
+    return send_file(DATA_FILE, as_attachment=True)
+
+# Run the app locally (optional)
+# if __name__ == "__main__":
+#     app.run(debug=True)
+
+
+   
