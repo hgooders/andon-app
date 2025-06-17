@@ -119,6 +119,39 @@ def download():
 # Run the app locally (optional)
 # if __name__ == "__main__":
 #     app.run(debug=True)
+@app.route("/summary-data")
+def summary_data():
+    from flask import jsonify
+
+    entries = []
+    total_stopped = 0
+
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = []
+
+            for entry in data:
+                try:
+                    stopped_time = int(entry.get("stopped_time", 0))
+                except ValueError:
+                    stopped_time = 0
+                total_stopped += stopped_time
+                entries.append(entry)
+
+    shift_minutes = 480
+    percent_stopped = round((total_stopped / shift_minutes) * 100, 1)
+    percent_running = round(100 - percent_stopped, 1)
+
+    return jsonify({
+        "total_stopped": total_stopped,
+        "percent_stopped": percent_stopped,
+        "percent_running": percent_running,
+        "entries": entries
+    })
+
 
 
    
