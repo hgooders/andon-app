@@ -1,166 +1,222 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <style>
-  body {
-    font-family: Arial, sans-serif;
-    font-size: 18px;
-    background-color: #f9f9f9;
-    margin: 0;
-    padding: 0;
-  }
-
-  h1, h2 {
-    text-align: center;
-    margin-top: 30px;
-    color: #007BFF;
-  }
-
-  p {
-    text-align: center;
-    font-size: 18px;
-  }
-
-  div[style*="text-align: center"] {
-    margin-bottom: 20px;
-  }
-
-  button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    margin: 5px;
-  }
-
-  button:hover {
-    background-color: #0056b3;
-  }
-
-  table {
-    margin: 20px auto;
-    border-collapse: collapse;
-    width: 90%;
-    background-color: white;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-
-  th, td {
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    text-align: center;
-  }
-
-  th {
-    background-color: #007BFF;
-    color: white;
-  }
-
-  td {
-    background-color: #fefefe;
-  }
-</style>
-
-  <style>
-  body {
-    font-size: 20px;
-    font-family: Arial, sans-serif;
-  }
-  input, select, textarea, button {
-    font-size: 18px;
-    padding: 10px;
-  }
-  table {
-    font-size: 18px;
-    border-collapse: collapse;
-  }
-  th, td {
-    padding: 10px 15px;
-  }
-</style>
-
-
   <title>Andon Summary</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 18px;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1, h2 {
+      text-align: center;
+      margin-top: 30px;
+      color: #007BFF;
+    }
+
+    p {
+      text-align: center;
+      font-size: 18px;
+    }
+
+    div[style*="text-align: center"] {
+      margin-bottom: 20px;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 90%;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background-color: #007BFF;
+      color: white;
+    }
+
+    td {
+      background-color: #fefefe;
+    }
+  </style>
 </head>
 <body>
-  <h1 style="text-align: center;">Andon Summary</h1>
 
- <p><strong>Total Time Stopped:</strong> <span id="totalStopped">{{ total_stopped }} minutes</span></p>
-<p><strong>Percent Stopped:</strong> <span id="percentStopped">{{ percent_stopped }}%</span></p>
-<p><strong>Percent Running:</strong> <span id="percentRunning">{{ percent_running }}%</span></p>
-<div style="text-align: center; margin-bottom: 20px;">
+  <h1>Andon Summary</h1>
 
-  <a href="/download">
-    <button style="padding: 10px 20px; font-size: 16px;">📥 Download Data</button>
-  </a>
+  <p><strong>Total Time Stopped:</strong> <span id="totalStopped">{{ total_stopped }} minutes</span></p>
+  <p><strong>Percent Stopped:</strong> <span id="percentStopped">{{ percent_stopped }}%</span></p>
+  <p><strong>Percent Running:</strong> <span id="percentRunning">{{ percent_running }}%</span></p>
 
-  <form method="POST" action="/reset" style="display: inline;">
-    <button type="submit" style="padding: 10px 20px; font-size: 16px;"
-            onclick="return confirm('Are you sure you want to reset all data?');">
-      🔄 Reset Data
-    </button>
-  </form>
+  <div style="text-align: center; margin: 20px 0;">
+    <a href="/download">
+      <button>📥 Download Data</button>
+    </a>
 
-</div>
+    <form method="POST" action="/reset" style="display: inline;">
+      <button type="submit" onclick="return confirm('Are you sure you want to reset all data?');">
+        🔄 Reset Data
+      </button>
+    </form>
+  </div>
 
+  <h2>Pareto Chart (Reasons for Downtime)</h2>
+  <canvas id="paretoChart" style="max-width: 1000px; margin: auto; display: block;"></canvas>
 
   <h2>All Andon Entries</h2>
-
-<table border="1" style="margin: auto;">
-  <tr>
-    <th>Reason</th>
-    <th>Name</th>
-    <th>Time Stopped (min)</th>
-    <th>Timestamp</th>
-  </tr>
-  <tbody id="andonTable">
-    {% for entry in entries %}
+  <table border="1">
     <tr>
-      <td>{{ entry.reason }}</td>
-      <td>{{ entry.name }}</td>
-      <td>{{ entry.stopped_time }}</td>
-      <td>{{ entry.timestamp }}</td>
+      <th>Reason</th>
+      <th>Name</th>
+      <th>Time Stopped (min)</th>
+      <th>Timestamp</th>
     </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    <tbody id="andonTable">
+      {% for entry in entries %}
+      <tr>
+        <td>{{ entry.reason }}</td>
+        <td>{{ entry.name }}</td>
+        <td>{{ entry.stopped_time }}</td>
+        <td>{{ entry.timestamp }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-
-  <br>
-  <div style="text-align: center;">
+  <div style="text-align: center; margin-top: 20px;">
     <a href="/"><button>Back</button></a>
   </div>
-</body>
+
   <script>
-  function updateSummary() {
-    fetch("/summary-data")
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("totalStopped").innerText = data.total_stopped + " minutes";
-        document.getElementById("percentStopped").innerText = data.percent_stopped + "%";
-        document.getElementById("percentRunning").innerText = data.percent_running + "%";
+    let paretoChart = null;
 
-        let rows = "";
-        data.entries.forEach(entry => {
-          rows += `<tr>
-            <td>${entry.reason}</td>
-            <td>${entry.name}</td>
-            <td>${entry.stopped_time}</td>
-            <td>${entry.timestamp}</td>
-          </tr>`;
+    function updateSummary() {
+      fetch("/summary-data")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("totalStopped").innerText = data.total_stopped + " minutes";
+          document.getElementById("percentStopped").innerText = data.percent_stopped + "%";
+          document.getElementById("percentRunning").innerText = data.percent_running + "%";
+
+          let rows = "";
+          data.entries.forEach(entry => {
+            rows += `<tr>
+              <td>${entry.reason}</td>
+              <td>${entry.name}</td>
+              <td>${entry.stopped_time}</td>
+              <td>${entry.timestamp}</td>
+            </tr>`;
+          });
+          document.getElementById("andonTable").innerHTML = rows;
+
+          updatePareto(data);
         });
-        document.getElementById("andonTable").innerHTML = rows;
+    }
+
+    function updatePareto(data) {
+      const reasonTotals = {};
+      data.entries.forEach(entry => {
+        const reason = entry.reason || "Other";
+        const time = parseInt(entry.stopped_time) || 0;
+        reasonTotals[reason] = (reasonTotals[reason] || 0) + time;
       });
-  }
 
-  // Refresh every 10 seconds
-  setInterval(updateSummary, 10000);
-  // First load
-  updateSummary();
-</script>
+      const sorted = Object.entries(reasonTotals).sort((a, b) => b[1] - a[1]);
+      const labels = sorted.map(item => item[0]);
+      const values = sorted.map(item => item[1]);
 
+      const total = values.reduce((a, b) => a + b, 0);
+      let cumulative = 0;
+      const cumulativePercent = values.map(v => {
+        cumulative += v;
+        return ((cumulative / total) * 100).toFixed(1);
+      });
 
+      const chartData = {
+        labels: labels,
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Downtime (min)',
+            data: values,
+            backgroundColor: '#007BFF'
+          },
+          {
+            type: 'line',
+            label: 'Cumulative %',
+            data: cumulativePercent,
+            yAxisID: 'y1',
+            borderColor: '#FF5733',
+            tension: 0.3,
+            fill: false
+          }
+        ]
+      };
+
+      const config = {
+        type: 'bar',
+        data: chartData,
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Minutes' }
+            },
+            y1: {
+              beginAtZero: true,
+              position: 'right',
+              ticks: { max: 100 },
+              title: { display: true, text: 'Cumulative %' },
+              grid: { drawOnChartArea: false }
+            }
+          }
+        }
+      };
+
+      if (paretoChart) {
+        paretoChart.data = chartData;
+        paretoChart.update();
+      } else {
+        const ctx = document.getElementById('paretoChart').getContext('2d');
+        paretoChart = new Chart(ctx, config);
+      }
+    }
+
+    setInterval(updateSummary, 10000);
+    updateSummary();
+  </script>
+
+</body>
 </html>
+
