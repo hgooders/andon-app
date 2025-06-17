@@ -77,6 +77,65 @@ def download():
     path = 'andon_data.xlsx'
     workbook.save(path)
     return send_file(path, as_attachment=True)
+@app.route('/summary')
+def summary():
+    entries = []
+    reason_counts = {}
+    total_stopped = 0
+
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = []
+            for entry in data:
+                reason = entry.get("reason", "Unknown")
+                name = entry.get("name", "Unknown")
+                stopped_time = int(entry.get("stopped_time", 0))
+                timestamp = entry.get("timestamp", "")
+
+                entries.append({
+                    "reason": reason,
+                    "name": name,
+                    "stopped_time": stopped_time,
+                    "timestamp": timestamp
+                })
+
+                reason_counts[reason] = reason_counts.get(reason, 0) + stopped_time
+                total_stopped += stopped_time
+
+    sorted_reasons = sorted(reason_counts.items(), key=lambda x: x[1], reverse=True)
+    top_reasons = sorted_reasons[:3]
+
+    percent_stopped = round((total_stopped / (total_stopped + 1)) * 100, 2)
+    percent_running = 100 - percent_stopped
+
+    # Pareto chart data
+    labels = [r[0] for r in sorted_reasons]
+    downtime = [r[1] for r in sorted_reasons]
+    cumulative = []
+    cumulative_total = 0
+    for d in downtime:
+        cumulative_total += d
+        cumulative.append(round((cumulative_total / total_stopped) * 100, 2) if total_stopped else 0)
+
+    pareto_data = {
+        "labels": labels,
+        "downtime": downtime,
+        "cumulative": cumulative
+    }
+
+    return render_template(
+        "summary.html",
+        entries=entries,
+        total_stopped=total_stopped,
+        percent_stopped=percent_stopped,
+        percent_running=percent_running,
+        top_reasons=top_reasons,
+        pareto_data=pareto_data  # Make sure this is included
+    )
+
 
 @app.route('/summary')
 def summary():
