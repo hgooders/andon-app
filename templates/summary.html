@@ -28,6 +28,20 @@
  <p><strong>Total Time Stopped:</strong> <span id="totalStopped">{{ total_stopped }} minutes</span></p>
 <p><strong>Percent Stopped:</strong> <span id="percentStopped">{{ percent_stopped }}%</span></p>
 <p><strong>Percent Running:</strong> <span id="percentRunning">{{ percent_running }}%</span></p>
+<div style="text-align: center; margin-bottom: 20px;">
+
+  <a href="/download">
+    <button style="padding: 10px 20px; font-size: 16px;">📥 Download Data</button>
+  </a>
+
+  <form method="POST" action="/reset" style="display: inline;">
+    <button type="submit" style="padding: 10px 20px; font-size: 16px;"
+            onclick="return confirm('Are you sure you want to reset all data?');">
+      🔄 Reset Data
+    </button>
+  </form>
+
+</div>
 
 
   <h2>All Andon Entries</h2>
