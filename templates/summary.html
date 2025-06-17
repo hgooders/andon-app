@@ -106,6 +106,10 @@ html, body {
 
  <div class="top-layout">
   <div class="left-pane">
+    <h2>Top 3 Downtime Reasons</h2>
+<ul id="topReasons" style="text-align: center; font-size: 20px; list-style: none; padding: 0;"></ul>
+
+
     <h2>Pareto Chart</h2>
     <canvas id="paretoChart"></canvas>
   </div>
@@ -173,6 +177,21 @@ html, body {
             </tr>`;
           });
           document.getElementById("andonTable").innerHTML = rows;
+// Top 3 downtime reasons
+const totals = {};
+data.entries.forEach(entry => {
+  const reason = entry.reason || "Other";
+  const time = parseInt(entry.stopped_time) || 0;
+  totals[reason] = (totals[reason] || 0) + time;
+});
+
+const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 3);
+const medals = ["🥇", "🥈", "🥉"];
+let topList = "";
+sorted.forEach((item, i) => {
+  topList += `<li>${medals[i]} ${item[0]} - ${item[1]} min</li>`;
+});
+document.getElementById("topReasons").innerHTML = topList;
 
           updatePareto(data);
         });
