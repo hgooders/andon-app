@@ -83,11 +83,15 @@
 
     <div class="section">
         <h2>Top 3 Downtime Reasons</h2>
-        <ul>
-            {% for reason, count in top_reasons %}
-                <li>{{ reason }} - {{ count }} occurrences</li>
-            {% endfor %}
-        </ul>
+<ol>
+    {% for reason, count in top_reasons %}
+        <li>
+            {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% endif %}
+            {{ reason }} - {{ count }} minutes
+        </li>
+    {% endfor %}
+</ol>
+
     </div>
 
     <div class="side-by-side">
