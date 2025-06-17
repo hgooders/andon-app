@@ -25,9 +25,10 @@
 <body>
   <h1 style="text-align: center;">Andon Summary</h1>
 
-  <p><strong>Total Time Stopped:</strong> {{ total_stopped }} minutes</p>
-  <p><strong>Percent Stopped:</strong> {{ percent_stopped }}%</p>
-  <p><strong>Percent Running:</strong> {{ percent_running }}%</p>
+ <p><strong>Total Time Stopped:</strong> <span id="totalStopped">{{ total_stopped }} minutes</span></p>
+<p><strong>Percent Stopped:</strong> <span id="percentStopped">{{ percent_stopped }}%</span></p>
+<p><strong>Percent Running:</strong> <span id="percentRunning">{{ percent_running }}%</span></p>
+
 
   <h2>All Andon Entries</h2>
   <table border="1" style="margin: auto;">
