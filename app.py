@@ -143,17 +143,18 @@ def summary():
         "downtime": pareto_downtime,
         "cumulative": cumulative
     }
+show_red_alert = top_reasons and top_reasons[0][0] == "Health and Safety"
 
-    return render_template("summary.html",
-                           entries=entries,
-                           total_stopped=total_stopped,
-                           percent_stopped=round(percent_stopped, 2),
-                           percent_running=round(percent_running, 2),
-                           top_reasons=top_reasons,
-                           pareto_data=pareto_data)
-
-
-
+   return render_template(
+    "summary.html",
+    entries=entries,
+    total_stopped=total_stopped,
+    percent_stopped=percent_stopped,
+    percent_running=percent_running,
+    top_reasons=top_reasons,
+    pareto_data=pareto_data,
+    show_red_alert=show_red_alert
+)
 
 @app.route('/download')
 def download():
