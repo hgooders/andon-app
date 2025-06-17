@@ -31,13 +31,15 @@
 
 
   <h2>All Andon Entries</h2>
-  <table border="1" style="margin: auto;">
-    <tr>
-      <th>Reason</th>
-      <th>Name</th>
-      <th>Time Stopped (min)</th>
-      <th>Timestamp</th>
-    </tr>
+
+<table border="1" style="margin: auto;">
+  <tr>
+    <th>Reason</th>
+    <th>Name</th>
+    <th>Time Stopped (min)</th>
+    <th>Timestamp</th>
+  </tr>
+  <tbody id="andonTable">
     {% for entry in entries %}
     <tr>
       <td>{{ entry.reason }}</td>
@@ -46,7 +48,9 @@
       <td>{{ entry.timestamp }}</td>
     </tr>
     {% endfor %}
-  </table>
+  </tbody>
+</table>
+
 
   <br>
   <div style="text-align: center;">
