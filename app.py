@@ -112,9 +112,62 @@ def reset():
     return redirect(url_for("opr"))
 
 # Download data
+
+from flask import send_file
+from openpyxl import Workbook
+from io import BytesIO
+from datetime import datetime
+
 @app.route("/download")
-def download():
-    return send_file(DATA_FILE, as_attachment=True)
+def download_data():
+    if not os.path.exists(DATA_FILE):
+        return "No data available to download."
+
+    with open(DATA_FILE, "r") as f:
+        lines = f.readlines()
+
+    if not lines:
+        return "No data available to download."
+
+    # Create Excel workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Andon Data"
+
+    # Headers
+    headers = ["Reason", "Name", "Time Stopped (min)", "Timestamp"]
+    ws.append(headers)
+
+    # Add rows
+    for line in lines:
+        parts = line.strip().split(",")
+        if len(parts) == 4:
+            ws.append(parts)
+
+    # Auto-size columns
+    for col in ws.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        ws.column_dimensions[col_letter].width = max_length + 2
+
+    # Save to memory
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"andon_data_{datetime.now().strftime('%Y-%m-%d')}.xlsx"
+    return send_file(
+        output,
+        download_name=filename,
+        as_attachment=True,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # Run the app locally (optional)
 # if __name__ == "__main__":
