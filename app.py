@@ -87,12 +87,9 @@ def opr():
     return render_template("opr.html", entries=entries, reasons=reasons)
 @app.route('/summary')
 def summary():
-    import collections
-    from flask import render_template
-    
     entries = []
-    reasons = {}
     total_stopped = 0
+    reasons = {}
 
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
@@ -101,60 +98,59 @@ def summary():
             except json.JSONDecodeError:
                 data = []
 
-            for entry in data:
-                timestamp = entry.get("timestamp", "Missing")
-                reason = entry.get("reason", "Missing")
-                name = entry.get("name", "Missing")
-                stopped_time = entry.get("stopped_time", 0)
+        for entry in data:
+            timestamp = entry.get("timestamp", "Missing")
+            reason = entry.get("reason", "Missing")
+            name = entry.get("name", "Missing")
+            stopped_time = entry.get("stopped_time", 0)
 
-                try:
-                    stopped_time = int(stopped_time)
-                except ValueError:
-                    stopped_time = 0
+            try:
+                stopped_time = int(stopped_time)
+            except ValueError:
+                stopped_time = 0
 
-                total_stopped += stopped_time
+            total_stopped += stopped_time
 
-                entries.append({
-                    "timestamp": timestamp,
-                    "reason": reason,
-                    "name": name,
-                    "stopped_time": stopped_time
-                })
+            entries.append({
+                "timestamp": timestamp,
+                "reason": reason,
+                "name": name,
+                "stopped_time": stopped_time
+            })
 
-                if reason not in reasons:
-                    reasons[reason] = 0
-                reasons[reason] += stopped_time
+            if reason not in reasons:
+                reasons[reason] = 0
+            reasons[reason] += stopped_time
 
-    # Calculate percentages based on an 8-hour shift (480 minutes)
-    shift_minutes = 420
-    percent_stopped = round((total_stopped / shift_minutes) * 100, 2)
-    percent_running = round(100 - percent_stopped, 2)
+    sorted_reasons = sorted(reasons.items(), key=lambda x: x[1], reverse=True)
+    top_reasons = sorted_reasons[:3]
 
-    # Sort reasons for top 3 and pareto chart
-    top_reasons = sorted(reasons.items(), key=lambda x: x[1], reverse=True)[:3]
+    total_shift_minutes = 480  # 8-hour shift
+    percent_stopped = (total_stopped / total_shift_minutes) * 100 if total_shift_minutes > 0 else 0
+    percent_running = 100 - percent_stopped
 
+    pareto_labels = [r[0] for r in sorted_reasons]
+    pareto_downtime = [r[1] for r in sorted_reasons]
     cumulative = []
-    running_total = 0
-    for _, value in top_reasons:
-        running_total += value
-        cumulative.append(round((running_total / total_stopped) * 100, 2))
+    cum_sum = 0
+    for dt in pareto_downtime:
+        cum_sum += dt
+        cumulative.append(round((cum_sum / total_stopped) * 100 if total_stopped else 0, 2))
 
     pareto_data = {
-        "labels": [r[0] for r in top_reasons],
-        "downtime": [r[1] for r in top_reasons],
+        "labels": pareto_labels,
+        "downtime": pareto_downtime,
         "cumulative": cumulative
     }
-# Flash red screen if top reason is Health and Safety
-flashing = top_reasons and top_reasons[0][0] == "Health and Safety"
 
-return render_template("summary.html", entries=entries,
+    return render_template("summary.html",
+                           entries=entries,
                            total_stopped=total_stopped,
-                           percent_stopped=percent_stopped,
-                           percent_running=percent_running,
-                           reasons=reasons,
+                           percent_stopped=round(percent_stopped, 2),
+                           percent_running=round(percent_running, 2),
                            top_reasons=top_reasons,
-                           pareto_data=pareto_data,
-                           flashing=flashing)
+                           pareto_data=pareto_data)
+
 
 
 
