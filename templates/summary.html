@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
 <head>
     <title>Andon Summary</title>
@@ -67,21 +67,21 @@
         .left-pane {
             text-align: center;
         }
-        .flash-red {
-  animation: flash 1s infinite;
-  background-color: red !important;
-}
-
-@keyframes flash {
-  0% { background-color: red; }
-  50% { background-color: #ff4d4d; }
-  100% { background-color: red; }
-}
-
+        @keyframes flash-red {
+            0% { background-color: #ff0000; }
+            50% { background-color: #ffffff; }
+            100% { background-color: #ff0000; }
+        }
     </style>
+    {% if show_red_alert %}
+    <style>
+        body {
+            animation: flash-red 1s infinite;
+        }
+    </style>
+    {% endif %}
 </head>
-<body class="{{ 'flash-red' if flashing and not session.get('flash_stopped') else '' }}">
-
+<body>
     <h1>Andon Summary</h1>
 
     <div class="button-row">
@@ -91,24 +91,20 @@
         <form action="/reset" method="post" style="display:inline;">
             <button type="submit">Reset All Andons</button>
         </form>
+        {% if show_red_alert %}
+        <form method="post" action="/stop_alert" style="display:inline;">
+            <button type="submit">Stop Alert</button>
+        </form>
+        {% endif %}
     </div>
-{% if flashing and not session.get('flash_stopped') %}
-  <form method="post" action="/stop-flash">
-    <button type="submit">Stop Flashing</button>
-  </form>
-{% endif %}
 
     <div class="section">
         <h2>Top 3 Downtime Reasons</h2>
-<ol>
-    {% for reason, count in top_reasons %}
-        <li>
-            {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% endif %}
-            {{ reason }} - {{ count }} minutes
-        </li>
-    {% endfor %}
-</ol>
-
+        <ul>
+            {% for reason, count in top_reasons %}
+                <li>{{ reason }} - {{ count }} occurrences</li>
+            {% endfor %}
+        </ul>
     </div>
 
     <div class="side-by-side">
@@ -116,7 +112,6 @@
             <h2>Pareto Chart</h2>
             <canvas id="paretoChart" width="600" height="400"></canvas>
         </div>
-
         <div class="right-pane">
             <h2>Performance</h2>
             <p><strong>Total Stopped Time:</strong> {{ total_stopped }} minutes</p>
@@ -202,4 +197,3 @@
     </script>
 </body>
 </html>
-
