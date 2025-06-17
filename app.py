@@ -86,77 +86,53 @@ def opr():
                 reasons[reason] += 1
 
     return render_template("opr.html", entries=entries, reasons=reasons)
+    
 @app.route('/summary')
 def summary():
-    entries = []
-    total_stopped = 0
-    reasons = {}
+    data = load_data()
 
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as f:
-            try:
-                data = json.load(f)
-            except json.JSONDecodeError:
-                data = []
+    total_stopped = sum(entry.get("stopped_time", 0) for entry in data)
+    total_possible = 8 * 60  # Assuming 8-hour shift
+    percent_stopped = round((total_stopped / total_possible) * 100, 1) if total_possible else 0
+    percent_running = round(100 - percent_stopped, 1)
 
-        for entry in data:
-            timestamp = entry.get("timestamp", "Missing")
-            reason = entry.get("reason", "Missing")
-            name = entry.get("name", "Missing")
-            stopped_time = entry.get("stopped_time", 0)
+    reasons = [entry.get("reason", "Unknown") for entry in data]
+    top_reasons = Counter(reasons).most_common(3)
 
-            try:
-                stopped_time = int(stopped_time)
-            except ValueError:
-                stopped_time = 0
+    # Pareto chart data
+    downtime_by_reason = {}
+    for entry in data:
+        reason = entry.get("reason", "Unknown")
+        downtime_by_reason[reason] = downtime_by_reason.get(reason, 0) + entry.get("stopped_time", 0)
 
-            total_stopped += stopped_time
-
-            entries.append({
-                "timestamp": timestamp,
-                "reason": reason,
-                "name": name,
-                "stopped_time": stopped_time
-            })
-
-            if reason not in reasons:
-                reasons[reason] = 0
-            reasons[reason] += stopped_time
-
-    sorted_reasons = sorted(reasons.items(), key=lambda x: x[1], reverse=True)
-    top_reasons = sorted_reasons[:3]
-
-    total_shift_minutes = 480  # 8-hour shift
-    percent_stopped = (total_stopped / total_shift_minutes) * 100 if total_shift_minutes > 0 else 0
-    percent_running = 100 - percent_stopped
-
-    pareto_labels = [r[0] for r in sorted_reasons]
-    pareto_downtime = [r[1] for r in sorted_reasons]
+    sorted_reasons = sorted(downtime_by_reason.items(), key=lambda x: x[1], reverse=True)
+    labels = [r[0] for r in sorted_reasons]
+    downtime = [r[1] for r in sorted_reasons]
+    total_downtime = sum(downtime)
     cumulative = []
-    cum_sum = 0
-    for dt in pareto_downtime:
-        cum_sum += dt
-        cumulative.append(round((cum_sum / total_stopped) * 100 if total_stopped else 0, 2))
+    cumulative_sum = 0
+    for d in downtime:
+        cumulative_sum += d
+        cumulative.append(round((cumulative_sum / total_downtime) * 100, 1) if total_downtime else 0)
 
     pareto_data = {
-        "labels": pareto_labels,
-        "downtime": pareto_downtime,
+        "labels": labels,
+        "downtime": downtime,
         "cumulative": cumulative
     }
-show_red_alert = False
-if top_reasons and top_reasons[0][0] == "Health and Safety":
-    show_red_alert = True
 
-return render_template(
-    "summary.html",
-    entries=entries,
-    total_stopped=total_stopped,
-    percent_stopped=percent_stopped,
-    percent_running=percent_running,
-    top_reasons=top_reasons,
-    pareto_data=pareto_data,
-    show_red_alert=show_red_alert
-)
+    show_red_alert = top_reasons and top_reasons[0][0] == "Health and Safety"
+
+    return render_template(
+        "summary.html",
+        entries=data,
+        total_stopped=total_stopped,
+        percent_stopped=percent_stopped,
+        percent_running=percent_running,
+        top_reasons=top_reasons,
+        pareto_data=pareto_data,
+        show_red_alert=show_red_alert
+    )
 
 @app.route('/download')
 def download():
