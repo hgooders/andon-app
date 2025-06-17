@@ -83,22 +83,6 @@ def opr():
     return render_template("opr.html", entries=entries, reasons=reasons)
 
 
-@app.route("/summary")
-def summary():
-    try:
-        # your existing logic goes here — temporarily removed to catch errors
-        return render_template("summary.html",
-                               entries=entries,
-                               top_reasons=top_reasons,
-                               total_stopped=total_stopped,
-                               percent_stopped=percent_stopped,
-                               percent_running=percent_running,
-                               pareto_data=pareto_data)
-    except Exception as e:
-        print("SUMMARY ERROR:", e)
-        return "Something broke on the summary page.", 500
-
-
 @app.route('/summary')
 def summary():
     try:
