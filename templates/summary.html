@@ -4,6 +4,35 @@
   <title>Andon Summary</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    <style>
+.flash-red {
+  animation: flashRed 1s ease-in-out infinite;
+}
+
+@keyframes flashRed {
+  0% { background-color: white; }
+  25% { background-color: red; }
+  50% { background-color: white; }
+  75% { background-color: red; }
+  100% { background-color: white; }
+}
+
+#stopAlertBtn {
+  display: none;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  padding: 15px 20px;
+  font-size: 16px;
+  background-color: #222;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+</style>
+
     .top-layout {
   display: flex;
   justify-content: space-between;
@@ -101,7 +130,7 @@ html, body {
   </style>
 </head>
 <body>
-
+<button id="stopAlertBtn" onclick="stopFlashing()">🛑 Stop Alert</button>
   <h1>Andon Summary</h1>
 
  <div class="top-layout">
@@ -274,6 +303,55 @@ document.getElementById("topReasons").innerHTML = topList;
     setInterval(updateSummary, 10000);
     updateSummary();
   </script>
+
+<script>
+let alertTimeout = null;
+
+function stopFlashing() {
+  document.body.classList.remove("flash-red");
+  document.getElementById("stopAlertBtn").style.display = "none";
+  clearTimeout(alertTimeout);
+}
+
+function updateSummary() {
+  fetch("/data")
+    .then(response => response.json())
+    .then(data => {
+      // Top 3 downtime reasons
+      const totals = {};
+      data.entries.forEach(entry => {
+        const reason = entry.reason || "Other";
+        const time = parseInt(entry.stopped_time) || 0;
+        totals[reason] = (totals[reason] || 0) + time;
+      });
+
+      const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+      const top3 = sorted.slice(0, 3);
+
+      // Flash red if Health and Safety is #1
+      if (top3.length > 0 && top3[0][0] === "Health and Safety") {
+        if (!document.body.classList.contains("flash-red")) {
+          document.body.classList.add("flash-red");
+          document.getElementById("stopAlertBtn").style.display = "block";
+          alertTimeout = setTimeout(() => stopFlashing(), 7 * 60 * 1000); // 7 minutes
+        }
+      }
+
+      // Show top 3 list
+      const medals = ["🥇", "🥈", "🥉"];
+      let topList = "";
+      top3.forEach((item, i) => {
+        topList += `<li>${medals[i]} ${item[0]} - ${item[1]} min</li>`;
+      });
+      document.getElementById("topReasons").innerHTML = topList;
+
+      updatePareto(data); // this stays!
+    });
+}
+
+setInterval(updateSummary, 10000);
+updateSummary();
+</script>
 
 </body>
 </html>
