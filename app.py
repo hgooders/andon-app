@@ -147,8 +147,7 @@ def summary():
 # Flash red screen if top reason is Health and Safety
 flashing = top_reasons and top_reasons[0][0] == "Health and Safety"
 
-    return render_template("summary.html",
-                           entries=entries,
+return render_template("summary.html", entries=entries,
                            total_stopped=total_stopped,
                            percent_stopped=percent_stopped,
                            percent_running=percent_running,
