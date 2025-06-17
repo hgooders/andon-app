@@ -82,77 +82,74 @@ def opr():
 
     return render_template("opr.html", entries=entries, reasons=reasons)
 
-
-@app.route('/summary')
 def summary():
-    try:
-        entries = []
-        reasons = {}
-        total_stopped = 0
+    import collections
+    from flask import render_template
+    
+    entries = []
+    reasons = {}
+    total_stopped = 0
 
-        if os.path.exists(DATA_FILE):
-            with open(DATA_FILE, "r") as f:
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = []
+
+            for entry in data:
+                timestamp = entry.get("timestamp", "Missing")
+                reason = entry.get("reason", "Missing")
+                name = entry.get("name", "Missing")
+                stopped_time = entry.get("stopped_time", 0)
+
                 try:
-                    data = json.load(f)
-                except json.JSONDecodeError:
-                    data = []
+                    stopped_time = int(stopped_time)
+                except ValueError:
+                    stopped_time = 0
 
-                for entry in data:
-                    timestamp = entry.get("timestamp", "Missing")
-                    reason = entry.get("reason", "Missing")
-                    name = entry.get("name", "Missing")
-                    stopped_time = entry.get("stopped_time", 0)
+                total_stopped += stopped_time
 
-                    try:
-                        stopped_time = int(stopped_time)
-                    except ValueError:
-                        stopped_time = 0
+                entries.append({
+                    "timestamp": timestamp,
+                    "reason": reason,
+                    "name": name,
+                    "stopped_time": stopped_time
+                })
 
-                    total_stopped += stopped_time
+                if reason not in reasons:
+                    reasons[reason] = 0
+                reasons[reason] += stopped_time
 
-                    entries.append({
-                        "timestamp": timestamp,
-                        "reason": reason,
-                        "name": name,
-                        "stopped_time": stopped_time
-                    })
+    # Calculate percentages based on an 8-hour shift (480 minutes)
+    shift_minutes = 480
+    percent_stopped = round((total_stopped / shift_minutes) * 100, 2)
+    percent_running = round(100 - percent_stopped, 2)
 
-                    if reason not in reasons:
-                        reasons[reason] = 0
-                    reasons[reason] += stopped_time
+    # Sort reasons for top 3 and pareto chart
+    top_reasons = sorted(reasons.items(), key=lambda x: x[1], reverse=True)[:3]
 
-        # Top 3 reasons
-        top_reasons = sorted(reasons.items(), key=lambda x: x[1], reverse=True)[:3]
+    cumulative = []
+    running_total = 0
+    for _, value in top_reasons:
+        running_total += value
+        cumulative.append(round((running_total / total_stopped) * 100, 2))
 
-        total_time = total_stopped + 1  # avoid division by zero
-        percent_stopped = round((total_stopped / total_time) * 100, 2)
-        percent_running = round(100 - percent_stopped, 2)
+    pareto_data = {
+        "labels": [r[0] for r in top_reasons],
+        "downtime": [r[1] for r in top_reasons],
+        "cumulative": cumulative
+    }
 
-        # Pareto data
-        sorted_reasons = sorted(reasons.items(), key=lambda x: x[1], reverse=True)
-        cumulative = []
-        cumulative_sum = 0
-        for reason, time in sorted_reasons:
-            cumulative_sum += time
-            cumulative.append(round((cumulative_sum / total_stopped) * 100 if total_stopped else 0, 2))
+    return render_template("summary.html",
+                           entries=entries,
+                           total_stopped=total_stopped,
+                           percent_stopped=percent_stopped,
+                           percent_running=percent_running,
+                           reasons=reasons,
+                           top_reasons=top_reasons,
+                           pareto_data=pareto_data)
 
-        pareto_data = {
-            "labels": [r[0] for r in sorted_reasons],
-            "downtime": [r[1] for r in sorted_reasons],
-            "cumulative": cumulative
-        }
-
-        return render_template("summary.html",
-                               entries=entries,
-                               top_reasons=top_reasons,
-                               total_stopped=total_stopped,
-                               percent_stopped=percent_stopped,
-                               percent_running=percent_running,
-                               pareto_data=pareto_data)
-
-    except Exception as e:
-        print("SUMMARY ERROR:", e)
-        return "Something broke on the summary page.", 500
 
 @app.route('/download')
 def download():
