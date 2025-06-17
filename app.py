@@ -83,22 +83,21 @@ def opr():
     return render_template("opr.html", entries=entries, reasons=reasons)
 
 
-@app.route('/summary')
+@app.route("/summary")
 def summary():
-    data = load_data()
-    total_stopped = sum(int(entry.get('stopped_time', 0)) for entry in data)
-    percent_stopped = round((total_stopped / (total_stopped + 1)) * 100, 2)
-    percent_running = round(100 - percent_stopped, 2)
-    top_reasons = Counter(entry.get('reason') for entry in data).most_common(3)
+    try:
+        # your existing logic goes here — temporarily removed to catch errors
+        return render_template("summary.html",
+                               entries=entries,
+                               top_reasons=top_reasons,
+                               total_stopped=total_stopped,
+                               percent_stopped=percent_stopped,
+                               percent_running=percent_running,
+                               pareto_data=pareto_data)
+    except Exception as e:
+        print("SUMMARY ERROR:", e)
+        return "Something broke on the summary page.", 500
 
-    return render_template(
-        'summary.html',
-        entries=data,
-        total_stopped=total_stopped,
-        percent_stopped=percent_stopped,
-        percent_running=percent_running,
-        top_reasons=top_reasons
-    )
 
 @app.route('/summary-data')
 def summary_data():
