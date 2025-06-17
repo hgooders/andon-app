@@ -27,10 +27,15 @@ def home():
 
 @app.route('/andon', methods=['POST'])
 def andon():
-    reason = request.form['reason']
-    name = request.form['name']
-    stopped_time = request.form['stopped_time']
-    timestamp = datetime.now().isoformat()
+    reason = request.form.get('reason', 'Unknown')
+name = request.form.get('name', 'Unknown')
+stopped_time = request.form.get('stopped_time', '0')
+
+try:
+    stopped_time = int(stopped_time)
+except ValueError:
+    stopped_time = 0
+
 
     new_entry = {
         "timestamp": timestamp,
