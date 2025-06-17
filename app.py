@@ -122,7 +122,7 @@ def summary():
                 reasons[reason] += stopped_time
 
     # Calculate percentages based on an 8-hour shift (480 minutes)
-    shift_minutes = 480
+    shift_minutes = 420
     percent_stopped = round((total_stopped / shift_minutes) * 100, 2)
     percent_running = round(100 - percent_stopped, 2)
 
