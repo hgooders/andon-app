@@ -5,6 +5,8 @@ import os
 import json
 import pandas as pd
 import io
+from flask import session
+app.secret_key = 'something'
 
 app = Flask(__name__)
 DATA_FILE = 'andon_data.json'
@@ -172,4 +174,9 @@ def reset():
 
 if __name__ == '__main__':
     app.run(debug=True)
+    
+@app.route('/stop-flash', methods=['POST'])
+def stop_flash():
+    session['flash_stopped'] = True
+    return redirect('/summary')
 
