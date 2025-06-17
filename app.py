@@ -121,7 +121,13 @@ def summary():
         "cumulative": cumulative
     }
 
-    show_red_alert = top_reasons and top_reasons[0][0] == "Health and Safety"
+    if top_reasons and top_reasons[0][0] == "Health and Safety":
+    session.setdefault("red_alert_active", True)
+else:
+    session["red_alert_active"] = False
+
+show_red_alert = session.get("red_alert_active", False)
+
 
     return render_template(
         "summary.html",
@@ -154,5 +160,7 @@ if __name__ == '__main__':
     
 @app.route("/stop_alert", methods=["POST"])
 def stop_alert():
+    session["red_alert_active"] = False
     return redirect(url_for("summary"))
+
 
