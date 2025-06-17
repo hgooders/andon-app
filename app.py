@@ -140,6 +140,8 @@ def summary():
         "downtime": [r[1] for r in top_reasons],
         "cumulative": cumulative
     }
+# Flash red screen if top reason is Health and Safety
+flashing = top_reasons and top_reasons[0][0] == "Health and Safety"
 
     return render_template("summary.html",
                            entries=entries,
@@ -148,7 +150,9 @@ def summary():
                            percent_running=percent_running,
                            reasons=reasons,
                            top_reasons=top_reasons,
-                           pareto_data=pareto_data)
+                           pareto_data=pareto_data,
+                           flashing=flashing)
+
 
 
 @app.route('/download')
