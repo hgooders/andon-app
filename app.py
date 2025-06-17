@@ -121,7 +121,7 @@ def summary():
         "cumulative": cumulative
     }
 
-    if top_reasons and top_reasons[0][0] == "Health and Safety":
+   if top_reasons and top_reasons[0][0] == "Health and Safety":
     session.setdefault("red_alert_active", True)
 else:
     session["red_alert_active"] = False
