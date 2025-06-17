@@ -121,13 +121,12 @@ def summary():
         "cumulative": cumulative
     }
 
-   if top_reasons and top_reasons[0][0] == "Health and Safety":
-    session.setdefault("red_alert_active", True)
-else:
-    session["red_alert_active"] = False
+    if top_reasons and top_reasons[0][0] == "Health and Safety":
+        session.setdefault("red_alert_active", True)
+    else:
+        session["red_alert_active"] = False
 
-show_red_alert = session.get("red_alert_active", False)
-
+    show_red_alert = session.get("red_alert_active", False)
 
     return render_template(
         "summary.html",
@@ -139,6 +138,7 @@ show_red_alert = session.get("red_alert_active", False)
         pareto_data=pareto_data,
         show_red_alert=show_red_alert
     )
+
 
 @app.route('/download')
 def download():
