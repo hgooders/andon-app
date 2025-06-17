@@ -81,7 +81,7 @@ def opr():
                 reasons[reason] += 1
 
     return render_template("opr.html", entries=entries, reasons=reasons)
-
+@app.route('/summary')
 def summary():
     import collections
     from flask import render_template
