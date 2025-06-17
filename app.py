@@ -158,8 +158,6 @@ return render_template(
     show_red_alert=show_red_alert
 )
 
-)
-
 @app.route('/download')
 def download():
     data = load_data()
