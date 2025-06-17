@@ -174,8 +174,7 @@ def reset():
 if __name__ == '__main__':
     app.run(debug=True)
     
-@app.route('/stop-flash', methods=['POST'])
-def stop_flash():
-    session['flash_stopped'] = True
-    return redirect('/summary')
+@app.route("/stop_alert", methods=["POST"])
+def stop_alert():
+    return redirect(url_for("summary"))
 
