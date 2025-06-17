@@ -8,9 +8,10 @@ import io
 
 from flask import session
 
-app.secret_key = 'something'
+
 
 app = Flask(__name__)
+app.secret_key = 'something'
 DATA_FILE = 'andon_data.json'
 
 def load_data():
