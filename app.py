@@ -127,7 +127,6 @@ def summary():
         session["red_alert_active"] = False
 
     show_red_alert = session.get("red_alert_active", False)
-
     return render_template(
         "summary.html",
         entries=data,
