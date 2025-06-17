@@ -1,50 +1,77 @@
-andon-app/templates/home.html
 <!DOCTYPE html>
 <html>
 <head>
-    <style>
-  body {
-    font-size: 20px;
-    font-family: Arial, sans-serif;
-  }
-  input, select, textarea, button {
-    font-size: 18px;
-    padding: 10px;
-  }
-  table {
-    font-size: 18px;
-    border-collapse: collapse;
-  }
-  th, td {
-    padding: 10px 15px;
-  }
-</style>
-
-
-    <title>Andon</title>
+  <title>Andon Reporting</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 18px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 30px;
+    }
+    form {
+      max-width: 400px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 15px;
+      font-size: 18px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
 
-<h1>Andon System</h1>
+  <h1>Andon Reporting</h1>
 
-<form method="POST" action="/andon">
-  <label for="reason">Reason:</label><br>
-  <input type="text" id="reason" name="reason" required><br><br>
+  <form method="POST" action="/andon">
+    <label for="reason">Reason</label>
+    <select name="reason" id="reason" required>
+      <option value="Toilet break">Toilet break</option>
+      <option value="Crossthread">Crossthread</option>
+      <option value="Snapped bolt/nut">Snapped bolt/nut</option>
+      <option value="Training Issue">Training Issue</option>
+        <option value="Health and Safety">Health and Safety</option>
+      <option value="Other">Other</option>
+    </select>
 
-  <label for="name">Your Name:</label><br>
-  <input type="text" id="name" name="name" required><br><br>
+    <label for="name">Your Name</label>
+    <input type="text" name="name" id="name" placeholder="Enter your name" required>
 
-  <label for="stopped_time">Time Stopped (minutes):</label><br>
-  <input type="number" id="stopped_time" name="stopped_time" min="0" required><br><br>
+    <label for="stopped_time">Time Stopped (minutes)</label>
+    <input type="number" name="stopped_time" id="stopped_time" placeholder="e.g. 5" required>
 
-  <button type="submit">Andon</button>
-</form>
-
-<br>
-<a href="/summary">
-  <button type="button">View Summary</button>
-</a>
-
+    <button type="submit">Submit Andon</button>
+  </form>
 
 </body>
 </html>
+
