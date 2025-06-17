@@ -50,10 +50,38 @@ def andon():
 
     return redirect(url_for('opr'))
 
-@app.route('/opr')
+@app.route("/opr")
 def opr():
-    entries = load_data()
-    return render_template('opr.html', entries=entries)
+    entries = []
+    reasons = {}
+
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = []
+
+            for entry in data:
+                timestamp = entry.get("timestamp", "Missing")
+                reason = entry.get("reason", "Missing")
+                name = entry.get("name", "Missing")
+                stopped_time = entry.get("stopped_time", "Missing")
+
+                entries.append({
+                    "timestamp": timestamp,
+                    "reason": reason,
+                    "name": name,
+                    "stopped_time": stopped_time
+                })
+
+                # Count reasons for display
+                if reason not in reasons:
+                    reasons[reason] = 0
+                reasons[reason] += 1
+
+    return render_template("opr.html", entries=entries, reasons=reasons)
+
 
 @app.route('/summary')
 def summary():
