@@ -52,4 +52,33 @@
     <a href="/"><button>Back</button></a>
   </div>
 </body>
+  <script>
+  function updateSummary() {
+    fetch("/summary-data")
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("totalStopped").innerText = data.total_stopped + " minutes";
+        document.getElementById("percentStopped").innerText = data.percent_stopped + "%";
+        document.getElementById("percentRunning").innerText = data.percent_running + "%";
+
+        let rows = "";
+        data.entries.forEach(entry => {
+          rows += `<tr>
+            <td>${entry.reason}</td>
+            <td>${entry.name}</td>
+            <td>${entry.stopped_time}</td>
+            <td>${entry.timestamp}</td>
+          </tr>`;
+        });
+        document.getElementById("andonTable").innerHTML = rows;
+      });
+  }
+
+  // Refresh every 10 seconds
+  setInterval(updateSummary, 10000);
+  // First load
+  updateSummary();
+</script>
+
+
 </html>
