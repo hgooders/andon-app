@@ -3,15 +3,17 @@ import json
 import os
 from datetime import datetime
 from collections import Counter
+import openpyxl
 
 app = Flask(__name__)
 DATA_FILE = 'andon_log.json'
 
-# Initialize file if not exists
+# Ensure data file exists
 if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, 'w') as f:
         json.dump([], f)
 
+# Logging function
 def log_andon(reason, name, stopped_time):
     with open(DATA_FILE, 'r+') as f:
         try:
@@ -27,83 +29,91 @@ def log_andon(reason, name, stopped_time):
         f.seek(0)
         json.dump(data, f, indent=2)
 
-@app.route("/")
+# Get all data
+def get_andon_data():
+    with open(DATA_FILE, 'r') as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return []
+
+@app.route('/')
 def home():
-    return render_template("home.html")
+    return render_template('home.html')
 
-@app.route("/andon", methods=["POST"])
+@app.route('/andon', methods=['POST'])
 def andon():
-    reason = request.form["reason"]
-    name = request.form["name"]
-    stopped_time = request.form["stopped_time"]
+    reason = request.form.get('reason')
+    name = request.form.get('name')
+    stopped_time = request.form.get('stopped_time', '0')
     log_andon(reason, name, stopped_time)
-    return redirect(url_for("opr"))
+    return redirect(url_for('opr'))
 
-@app.route("/opr")
+@app.route('/opr')
 def opr():
-    entries = []
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as f:
-            try:
-                data = json.load(f)
-            except json.JSONDecodeError:
-                data = []
-            for entry in data:
-                entries.append({
-                    "timestamp": entry.get("timestamp", "Unknown"),
-                    "reason": entry.get("reason", "Unknown"),
-                    "name": entry.get("name", "Unknown"),
-                    "stopped_time": entry.get("stopped_time", "0")
-                })
-    return render_template("opr.html", entries=entries)
+    entries = get_andon_data()
+    return render_template('opr.html', entries=entries)
 
-@app.route("/summary")
+@app.route('/reset', methods=['POST'])
+def reset():
+    with open(DATA_FILE, 'w') as f:
+        f.write("[]")
+    return redirect(url_for('opr'))
+
+@app.route('/download')
+def download():
+    entries = get_andon_data()
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Andon Data"
+    sheet.append(["Timestamp", "Reason", "Name", "Stopped Time (min)"])
+    for entry in entries:
+        sheet.append([
+            entry.get("timestamp", ""),
+            entry.get("reason", ""),
+            entry.get("name", ""),
+            entry.get("stopped_time", "")
+        ])
+    path = 'andon_data.xlsx'
+    workbook.save(path)
+    return send_file(path, as_attachment=True)
+
+@app.route('/summary')
 def summary():
-    entries = []
+    data = get_andon_data()
     total_stopped = 0
-    reason_counter = Counter()
+    reasons_counter = Counter()
+    flashing = False
 
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as f:
-            try:
-                data = json.load(f)
-            except json.JSONDecodeError:
-                data = []
-            for entry in data:
-                timestamp = entry.get("timestamp", "Unknown")
-                reason = entry.get("reason", "Unknown")
-                name = entry.get("name", "Unknown")
-                stopped_time = int(entry.get("stopped_time", 0))
-                total_stopped += stopped_time
-                reason_counter[reason] += stopped_time
-                entries.append({
-                    "timestamp": timestamp,
-                    "reason": reason,
-                    "name": name,
-                    "stopped_time": stopped_time
-                })
+    for entry in data:
+        try:
+            stopped_time = int(entry.get("stopped_time", 0))
+            total_stopped += stopped_time
+            reason = entry.get("reason", "Unknown")
+            reasons_counter[reason] += stopped_time
+        except ValueError:
+            continue
 
-    sorted_reasons = reason_counter.most_common()
-    reasons = [item[0] for item in sorted_reasons]
-    times = [item[1] for item in sorted_reasons]
+    top_reasons = reasons_counter.most_common(3)
+    percent_stopped = 0
+    percent_running = 100
+    if total_stopped > 0:
+        percent_stopped = total_stopped / (total_stopped + 60) * 100  # Example calc
+        percent_running = 100 - percent_stopped
+
+    if top_reasons and top_reasons[0][0].lower() == "health and safety":
+        flashing = True
 
     return render_template(
         "summary.html",
-        entries=entries,
+        entries=data,
         total_stopped=total_stopped,
-        reasons=reasons,
-        times=times
+        percent_stopped=round(percent_stopped, 2),
+        percent_running=round(percent_running, 2),
+        top_reasons=top_reasons,
+        flashing=flashing
     )
 
-@app.route("/reset", methods=["POST"])
-def reset():
-    with open(DATA_FILE, "w") as f:
-        f.write("[]")
-    return redirect(url_for("opr"))
-
-@app.route("/download")
-def download():
-    return send_file(DATA_FILE, as_attachment=True)
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
+
