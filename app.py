@@ -1,88 +1,62 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session
 from datetime import datetime, timedelta
-from collections import Counter
-import os
-import json
+import os, json
 
 app = Flask(__name__)
-app.secret_key = 'something'
+app.secret_key = os.getenv('SECRET_KEY', 'devsecret')
 DATA_FILE = 'andon_data.json'
-ALARM_FILE = 'alarm.json'
 
 def load_data():
     if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r') as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return []
+        with open(DATA_FILE) as f:
+            try: return json.load(f)
+            except: return []
     return []
 
 def save_data(data):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
-def load_alarm_state():
-    if os.path.exists(ALARM_FILE):
-        with open(ALARM_FILE, 'r') as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {"active": False, "start_time": None}
-    return {"active": False, "start_time": None}
-
-def save_alarm_state(state):
-    with open(ALARM_FILE, 'w') as f:
-        json.dump(state, f)
-
 @app.route('/')
 def home():
+    return render_template('home.html')
+
+@app.route('/opr', methods=['GET'])
+def opr():
+    alert = session.get('alert_until') and datetime.utcnow() < datetime.fromisoformat(session['alert_until'])
+    return render_template('opr.html', alert_active=alert, names=['Alice','Bob','Charlie'])
+
+@app.route('/andon', methods=['POST'])
+def andon():
+    name = request.form['name']
+    reason = request.form['reason']
+    stopped = int(request.form.get('stopped_time', 0))
+    ts = datetime.utcnow().isoformat()
+    
+    data = load_data()
+    data.append({'timestamp': ts, 'name': name, 'reason': reason, 'stopped_time': stopped})
+    save_data(data)
+    
+    if reason == 'Health and Safety':
+        session['alert_until'] = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
     return redirect(url_for('opr'))
 
-@app.route('/opr', methods=['GET', 'POST'])
-def opr():
-    if request.method == 'POST':
-        name = request.form['name']
-        reason = request.form['reason']
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        stopped_time = int(request.form.get('stopped_time', 0))
-        entry = {
-            "name": name,
-            "reason": reason,
-            "timestamp": timestamp,
-            "stopped_time": stopped_time
-        }
-        data = load_data()
-        data.append(entry)
-        save_data(data)
+@app.route('/stop_alert', methods=['POST'])
+def stop_alert():
+    session.pop('alert_until', None)
+    return redirect(url_for('opr'))
 
-        # Trigger red alert if reason is Health and Safety
-        if reason.lower() == "health and safety":
-            alarm_state = {
-                "active": True,
-                "start_time": datetime.now().isoformat()
-            }
-            save_alarm_state(alarm_state)
-
-        return redirect(url_for('opr'))
-
-    alarm_state = load_alarm_state()
-    alarm_active = False
-    if alarm_state['active']:
-        start_time = datetime.fromisoformat(alarm_state['start_time'])
-        if datetime.now() - start_time < timedelta(minutes=10):
-            alarm_active = True
-        else:
-            alarm_state['active'] = False
-            save_alarm_state(alarm_state)
-
-    return render_template('opr.html', alarm_active=alarm_active)
-
-@app.route('/stop_alarm', methods=['POST'])
-def stop_alarm():
-    save_alarm_state({"active": False, "start_time": None})
-    return '', 204
+@app.route('/summary')
+def summary():
+    data = load_data()
+    total = sum(int(e.get('stopped_time', 0)) for e in data)
+    reasons = {}
+    for e in data:
+        r = e.get('reason')
+        reasons[r] = reasons.get(r, 0) + int(e.get('stopped_time',0))
+    top = sorted(reasons.items(), key=lambda x: -x[1])[:3]
+    return render_template('summary.html', total_stopped=total, top_reasons=top, entries=data)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
 
