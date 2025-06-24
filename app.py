@@ -95,14 +95,15 @@ def summary():
     pareto_data = {"labels": labels, "downtime": downtime, "cumulative": cum}
 
     return render_template('summary.html',
-        entries=data,
-        total_stopped=total_stopped,
-        percent_stopped=percent_stopped,
-        percent_running=percent_running,
-        top_reasons=top_reasons,
-        pareto_data=pareto_data,
-        flashing=session.get('flashing', False)  # ✅ Add this so the flashing works
-    )
+    entries=data,
+    total_stopped=total_stopped,
+    percent_stopped=percent_stopped,
+    percent_running=percent_running,
+    top_reasons=top_reasons,
+    pareto_data=pareto_data,
+    flashing=flashing  # ✅ This lets summary.html know to flash
+)
+
 
 
 
@@ -127,7 +128,7 @@ def andon():
 
     # If reason is Health and Safety, set alert
     if reason == "Health and Safety":
-        session['alert_active'] = True
+        session['flashing'] = True
         session['alert_start_time'] = datetime.now().timestamp()
 
     return redirect(url_for('summary'))  # Redirect to summary page
