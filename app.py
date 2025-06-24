@@ -81,8 +81,10 @@ def summary():
     for e in data:
         reasons_count[e['reason']] += int(e['stopped_time'])
 
-    labels = list(reasons_count.keys())
-    downtime = list(reasons_count.values())
+    sorted_items = sorted(reasons_count.items(), key=lambda x: x[1], reverse=True)
+labels = [item[0] for item in sorted_items]
+downtime = [item[1] for item in sorted_items]
+
     total_time = sum(downtime)
 
     cumulative = []
