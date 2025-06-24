@@ -96,7 +96,7 @@ total_time = sum(downtime)
 cumulative = []
 running = 0
 for value in downtime:
-    running += value
+    running += value 
     cumulative.append(round(running / total_time * 100, 2) if total_time else 0)
 
 pareto_data = {
