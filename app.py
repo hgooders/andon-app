@@ -79,13 +79,32 @@ def summary():
 
     top_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)[:3]
 
-    # Prepare pareto chart data
-    reasons_count = Counter()
-    for e in data:
-        reasons_count[e['reason']] += int(e['stopped_time'])
+    # For Pareto chart (sorted)
+reason_totals = {}
+for entry in entries:
+    reason = entry.get('reason')
+    time = int(entry.get('stopped_time', 0))
+    reason_totals[reason] = reason_totals.get(reason, 0) + time
 
-    labels = list(reasons_count.keys())
-    downtime = list(reasons_count.values())
+# Sort by highest downtime first
+sorted_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)
+labels = [item[0] for item in sorted_reasons]
+downtime = [item[1] for item in sorted_reasons]
+
+# Calculate cumulative % for Pareto
+total_time = sum(downtime)
+cumulative = []
+running = 0
+for value in downtime:
+    running += value
+    cumulative.append(round(running / total_time * 100, 2) if total_time else 0)
+
+pareto_data = {
+    "labels": labels,
+    "downtime": downtime,
+    "cumulative": cumulative
+}
+
     running = 0
     cum = []
     for t in downtime:
