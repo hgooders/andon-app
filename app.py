@@ -92,6 +92,30 @@ def summary():
                            percent_running=percent_running,
                            top_reasons=top,
                            pareto_data=pareto_data)
+@app.route('/andon', methods=['POST'])
+def andon():
+    data = load_data()
+
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    reason = request.form.get('reason')
+    name = request.form.get('name')
+    stopped_time = request.form.get('stopped_time')
+
+    data.append({
+        'timestamp': timestamp,
+        'reason': reason,
+        'name': name,
+        'stopped_time': int(stopped_time)
+    })
+
+    save_data(data)
+
+    # If reason is Health and Safety, set alert
+    if reason == "Health and Safety":
+        session['alert_active'] = True
+        session['alert_start_time'] = datetime.now().timestamp()
+
+    return redirect(url_for('summary'))  # Redirect to summary page
 
 @app.route('/download')
 def download():
