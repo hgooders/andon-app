@@ -1,12 +1,36 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Andon Home</title>
+    <title>Andon Data Collection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding-top: 100px;
+        }
+        h1 {
+            color: #333;
+        }
+        a.button {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px;
+            font-size: 18px;
+            text-decoration: none;
+            color: white;
+            background-color: #007BFF;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        a.button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
     <h1>Welcome to the Andon System</h1>
-    <p><a href="/opr">Go to OPR</a></p>
-    <p><a href="/summary">View Summary</a></p>
+    <a href="{{ url_for('opr') }}" class="button">Go to OPR</a>
+    <a href="{{ url_for('summary') }}" class="button">View Summary</a>
 </body>
 </html>
