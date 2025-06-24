@@ -77,7 +77,8 @@ for entry in entries:
     reason_totals[entry['reason']] += int(entry['stopped_time'])
 
 # Get top 3 reasons by total stopped time
-top_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)[:3]
+    # Get top 3 reasons by total stopped time
+    top_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)[:3]
 
     shift_minutes = 480
     percent_stopped = round((total_stopped / shift_minutes) * 100, 1)
@@ -98,8 +99,10 @@ top_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)[:3
                            total_stopped=total_stopped,
                            percent_stopped=percent_stopped,
                            percent_running=percent_running,
-                           top_reasons=top,
+                           top_reasons=top_reasons,
                            pareto_data=pareto_data)
+
+
 @app.route('/andon', methods=['POST'])
 def andon():
     data = load_data()
