@@ -1,79 +1,51 @@
-<!DOCTYPE html> 
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
- <style>
-  body {
-    font-size: 20px;
-    font-family: Arial, sans-serif;
-  }
-  input, select, textarea, button {
-    font-size: 18px;
-    padding: 10px;
-  }
-  table {
-    font-size: 18px;
-    border-collapse: collapse;
-  }
-  th, td {
-    padding: 10px 15px;
-  }
-</style>
-
- 
-  <title>OPR</title>
+  <meta charset="UTF-8">
+  <title>OPR - Andon System</title>
+  <style>
+    body.alert-active {
+      background-color: red;
+      color: white;
+      animation: flash 1s infinite;
+    }
+    @keyframes flash {
+      0%, 100% { background-color: red; }
+      50% { background-color: darkred; }
+    }
+    .alert-button {
+      margin: 10px 0;
+    }
+  </style>
 </head>
-<body>
-  <h1 style="text-align: center;">Operational Performance Report</h1>
+<body class="{{ 'alert-active' if alert_active else '' }}">
+  <h1>Andon Reporting</h1>
 
-  <h2>Most Common Reasons</h2>
-  <ul>
-    {% for reason, count in reasons.items() %}
-      <li>{{ reason }}: {{ count }}</li>
-    {% endfor %}
-  </ul>
+  <form action="/andon" method="post">
+    <label>Name:</label><br>
+    <input type="text" name="name" required><br><br>
 
-  <h2>All Andon Presses</h2>
-  <table border="1" style="margin: auto;">
-    <tr>
-      <th>Reason</th>
-      <th>Name</th>
-      <th>Time Stopped (min)</th>
-      <th>Timestamp</th>
-    </tr>
-    {% for entry in entries %}
-    <tr>
-      <td>{{ entry.reason }}</td>
-      <td>{{ entry.name }}</td>
-      <td>{{ entry.stopped_time }}</td>
-      <td>{{ entry.timestamp }}</td>
-    </tr>
-    {% endfor %}
-  </table>
+    <label>Reason:</label><br>
+    <select name="reason" required>
+      <option value="Quality">Quality</option>
+      <option value="Technical">Technical</option>
+      <option value="Health and Safety">Health and Safety</option>
+      <option value="Supply Issue">Supply Issue</option>
+      <option value="Other">Other</option>
+    </select><br><br>
 
-  <br>
+    <label>Downtime (minutes):</label><br>
+    <input type="number" name="stopped_time" min="0" required><br><br>
 
-  <center>
-    <table>
-      <tr>
-        <td>
-          <form method="POST" action="/reset">
-            <button type="submit">Reset All Andons</button>
-          </form>
-        </td>
-        <td>
-          <form method="GET" action="/download">
-            <button type="submit">Download Data</button>
-          </form>
-        </td>
-        <td>
-          <form action="/">
-            <button type="submit">Back</button>
-          </form>
-        </td>
-      </tr>
-    </table>
-  </center>
+    <button type="submit">Submit Andon</button>
+  </form>
+
+  {% if alert_active %}
+    <form action="/stop_alert" method="post">
+      <button class="alert-button" type="submit">Stop Alert</button>
+    </form>
+  {% endif %}
+
+  <p><a href="/">Back to Home</a></p>
 </body>
 </html>
-
-
