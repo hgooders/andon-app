@@ -2,81 +2,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Andon Summary</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: {% if flashing %}red{% else %}#E9F0F5{% endif %};
-            color: #333;
-            padding: 20px;
-            animation: {% if flashing %}flashRed 1s infinite{% else %}none{% endif %};
-        }
-        @keyframes flashRed {
-            0% { background-color: red; }
-            50% { background-color: #E9F0F5; }
-            100% { background-color: red; }
-        }
-        
-<script>
-  // Refresh every 5 seconds
-  setInterval(function() {
-    window.location.reload();
-  }, 10000);
-</script>
+  <title>Andon Summary</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: {% if flashing %}red{% else %}#E9F0F5{% endif %};
+      color: #333;
+      padding: 20px;
+      animation: {% if flashing %}flashRed 1s infinite{% else %}none{% endif %};
+    }
 
-        h1 {
-            text-align: center;
-            color: #007BFF;
-        }
-        .button-row {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        button {
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            border-radius: 4px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        table {
-            width: 90%;
-            margin: 0 auto 30px auto;
-            border-collapse: collapse;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        th, td {
-            padding: 12px;
-            border: 1px solid #ddd;
-            text-align: center;
-        }
-        th {
-            background-color: #007BFF;
-            color: white;
-        }
-        .side-by-side {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 40px;
-            margin: 30px 0;
-        }
-        .left-pane, .right-pane {
-            flex: 1;
-            min-width: 300px;
-        }
-        .left-pane {
-            text-align: center;
-        }
-    </style>
+    @keyframes flashRed {
+      0% { background-color: red; }
+      50% { background-color: #E9F0F5; }
+      100% { background-color: red; }
+    }
+
+    h1 {
+      text-align: center;
+      color: #007BFF;
+    }
+
+    .button-row {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .button-row form {
+      display: inline-block;
+      margin: 0 10px;
+    }
+
+    .button-row button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    .button-row button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+
+  <script>
+    // This script reloads the page every 10 seconds
+    setInterval(function() {
+      window.location.reload(true);
+    }, 10000);
+  </script>
 </head>
+
     {% if flashing %}
 <audio id="alarmSound" autoplay loop>
   <source src="{{ url_for('static', filename='alarm.mp3') }}" type="audio/mpeg">
