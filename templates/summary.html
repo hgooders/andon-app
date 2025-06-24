@@ -74,9 +74,10 @@
 
     {% if flashing %}
     <div class="button-row">
-        <form action="/stop_alert" method="post">
-            <button type="submit">Stop Alert</button>
-        </form>
+        <form action="{{ url_for('stop_alert') }}" method="post">
+    <button type="submit">Stop Alarm</button>
+</form>
+
     </div>
     {% endif %}
 
