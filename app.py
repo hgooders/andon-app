@@ -20,9 +20,11 @@ def save_data(data):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
+
 @app.route('/')
-def index():
-    return render_template('index.html')
+def home():
+    return render_template('opr.html')
+
 
 @app.route('/opr', methods=['GET', 'POST'])
 def opr():
