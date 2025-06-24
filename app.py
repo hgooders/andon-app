@@ -64,64 +64,52 @@ def stop_alert():
 @app.route('/summary')
 def summary():
     data = load_data()
-
     total_stopped = sum(int(entry['stopped_time']) for entry in data)
-    shift_minutes = 420
+    shift_minutes = 480
     percent_stopped = round((total_stopped / shift_minutes) * 100, 1)
     percent_running = 100 - percent_stopped
 
-    # Top 3 reasons by total stopped time
-    from collections import defaultdict, Counter
-
+    from collections import defaultdict
     reason_totals = defaultdict(int)
     for entry in data:
         reason_totals[entry['reason']] += int(entry['stopped_time'])
 
     top_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)[:3]
 
-    # For Pareto chart (sorted)
-reason_totals = {}
-for entry in entries:
-    reason = entry.get('reason')
-    time = int(entry.get('stopped_time', 0))
-    reason_totals[reason] = reason_totals.get(reason, 0) + time
+    from collections import Counter
+    reasons_count = Counter()
+    for e in data:
+        reasons_count[e['reason']] += int(e['stopped_time'])
 
-# Sort by highest downtime first
-sorted_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)
-labels = [item[0] for item in sorted_reasons]
-downtime = [item[1] for item in sorted_reasons]
+    labels = list(reasons_count.keys())
+    downtime = list(reasons_count.values())
+    total_time = sum(downtime)
 
-# Calculate cumulative % for Pareto
-total_time = sum(downtime)
-cumulative = []
-running = 0
-for value in downtime:
-    running += value 
-    cumulative.append(round(running / total_time * 100, 2) if total_time else 0)
-
-pareto_data = {
-    "labels": labels,
-    "downtime": downtime,
-    "cumulative": cumulative
-}
-
+    cumulative = []
     running = 0
-    cum = []
-    for t in downtime:
-        running += t
-        cum.append(round((running / total_stopped) * 100, 1) if total_stopped else 0)
+    for value in downtime:
+        running += value
+        cumulative.append(round(running / total_time * 100, 2) if total_time else 0)
 
-    pareto_data = {"labels": labels, "downtime": downtime, "cumulative": cum}
-    flashing = session.get('flashing', False)
-    return render_template('summary.html',
-    entries=data,
-    total_stopped=total_stopped,
-    percent_stopped=percent_stopped,
-    percent_running=percent_running,
-    top_reasons=top_reasons,
-    pareto_data=pareto_data,
-    flashing=flashing  # ✅ This lets summary.html know to flash
-)
+    pareto_data = {
+        "labels": labels,
+        "downtime": downtime,
+        "cumulative": cumulative
+    }
+
+    flashing = session.get('alert_active', False)
+
+    return render_template(
+        'summary.html',
+        entries=data,
+        total_stopped=total_stopped,
+        percent_stopped=percent_stopped,
+        percent_running=percent_running,
+        top_reasons=top_reasons,
+        pareto_data=pareto_data,
+        flashing=flashing  # This lets the template know whether to flash
+    )
+
 
 
 
