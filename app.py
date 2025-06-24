@@ -69,8 +69,16 @@ def summary():
     reasons_count = Counter()
     for e in data:
         reasons_count[e['reason']] += int(e['stopped_time'])
+from collections import defaultdict
 
-    top = reasons_count.most_common(3)
+# Calculate total stopped time for each reason
+reason_totals = defaultdict(int)
+for entry in entries:
+    reason_totals[entry['reason']] += int(entry['stopped_time'])
+
+# Get top 3 reasons by total stopped time
+top_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)[:3]
+
     shift_minutes = 480
     percent_stopped = round((total_stopped / shift_minutes) * 100, 1)
     percent_running = 100 - percent_stopped
