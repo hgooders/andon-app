@@ -95,13 +95,15 @@ def summary():
         "cumulative": cum
     }
 
-    return render_template('summary.html',
-                           entries=data,
-                           total_stopped=total_stopped,
-                           percent_stopped=percent_stopped,
-                           percent_running=percent_running,
-                           top_reasons=top_reasons,
-                           pareto_data=pareto_data)
+   flashing = session.get('alert_active', False)
+return render_template("summary.html",
+    entries=data,
+    total_stopped=total_stopped,
+    percent_stopped=percent_stopped,
+    percent_running=percent_running,
+    top_reasons=top_reasons,
+    pareto_data=pareto_data,
+    flashing=flashing)
 
 
 @app.route('/andon', methods=['POST'])
