@@ -122,7 +122,7 @@
     {% for reason, count in top_reasons %}
         <li>
             {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% endif %}
-            {{ reason }} - {{ count }} occurrences
+            {{ reason }} - {{ count }} minutes
         </li>
     {% endfor %}
 </ol>
