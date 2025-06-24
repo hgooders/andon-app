@@ -60,7 +60,7 @@ def opr():
 @app.route('/stop_alert', methods=['POST'])
 def stop_alert():
     session.pop('alert_until', None)
-    return redirect(url_for('opr'))
+    return redirect(url_for('summary'))
 @app.route('/summary')
 def summary():
     data = load_data()
