@@ -1,104 +1,193 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Andon Summary</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #E9F0F5; color: #333; padding: 20px; }
-    h1 { text-align: center; color: #007BFF; }
-    .button-row { text-align: center; margin: 20px; }
-    button { background: #007BFF; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 4px; margin: 0 5px; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    table { width: 80%; margin: 20px auto; border-collapse: collapse; background: white; }
-    th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-    th { background: #007BFF; color: white; }
-    .medal1 { background: gold; }
-    .medal2 { background: silver; }
-    .medal3 { background: #cd7f32; } 
-    .chart-container { width: 80%; margin: 0 auto 30px; }
-    .alert-btn { background: #f44336; margin-top: 20px; }
-  </style>
-</head>
-<body {% if flashing %}style="background-color:red;"{% endif %}>
-
-  <h1>Andon Summary</h1>
-
-  <div class="button-row">
-    <a href="{{ url_for('download') }}"><button>Download CSV</button></a>
-    <form method="post" action="{{ url_for('reset') }}" style="display:inline;">
-      <button type="submit">Reset All Andons</button>
-    </form>
-  </div>
-
-  <div class="section">
-    <h2>Top 3 Downtime Reasons</h2>
-    <table>
-      <tr><th>Rank</th><th>Reason</th><th>Total Minutes</th></tr>
-      {% for reason, mins in top_reasons %}
-      <tr class="medal{{ loop.index }}">
-        <td>{{ loop.index }}</td>
-        <td>{{ reason }}</td>
-        <td>{{ mins }}</td>
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
-
-  <div class="side-by-side">
-    <div class="left-pane">
-      <h2>Pareto Chart</h2>
-      <div class="chart-container">
-        <canvas id="paretoChart"></canvas>
-      </div>
-    </div>
-    <div class="right-pane">
-      <h2>Performance</h2>
-      <p><strong>Total Stopped Time:</strong> {{ total_stopped }} min</p>
-      <p><strong>Stopped:</strong> {{ percent_stopped }}%</p>
-      <p><strong>Running:</strong> {{ percent_running }}%</p>
-      {% if flashing %}
-      <form method="post" action="{{ url_for('stop_alert') }}">
-        <button class="alert-btn">Stop Alert</button>
-      </form>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="section">
-    <h2>All Andon Entries</h2>
-    <table>
-      <tr><th>Time</th><th>Name</th><th>Reason</th><th>Minutes Stopped</th></tr>
-      {% for e in entries %}
-      <tr>
-        <td>{{ e.timestamp }}</td>
-        <td>{{ e.name }}</td>
-        <td>{{ e.reason }}</td>
-        <td>{{ e.stopped_time }}</td>
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
-
-  <script>
-    const data = {{ pareto_data | tojson }};
-    const ctx = document.getElementById('paretoChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: data.labels,
-        datasets: [
-          { label: 'Downtime (min)', data: data.downtime, backgroundColor: 'rgba(54, 162, 235, 0.7)', yAxisID: 'y' },
-          { label: 'Cumulative %', data: data.cumulative, type: 'line', borderColor: 'red', yAxisID: 'y1', fill: false }
-        ]
-      },
-      options: {
-        scales: {
-          y: { beginAtZero: true, title: { display: true, text: 'Min' } },
-          y1: { beginAtZero: true, position: 'right', max: 100, ticks: { callback: val => val + '%' }, title: { display: true, text: 'Cumulative %' } }
+    <title>Andon Summary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: {% if flashing %}red{% else %}#E9F0F5{% endif %};
+            color: #333;
+            padding: 20px;
+            animation: {% if flashing %}flashRed 1s infinite{% else %}none{% endif %};
         }
-      }
-    });
-  </script>
+        @keyframes flashRed {
+            0% { background-color: red; }
+            50% { background-color: #E9F0F5; }
+            100% { background-color: red; }
+        }
+        h1 {
+            text-align: center;
+            color: #007BFF;
+        }
+        .button-row {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 90%;
+            margin: 0 auto 30px auto;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        .side-by-side {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 40px;
+            margin: 30px 0;
+        }
+        .left-pane, .right-pane {
+            flex: 1;
+            min-width: 300px;
+        }
+        .left-pane {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Andon Summary</h1>
 
+    {% if flashing %}
+    <div class="button-row">
+        <form action="/stop_alert" method="post">
+            <button type="submit">Stop Alert</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="button-row">
+        <form action="/download" method="get" style="display:inline;">
+            <button type="submit">Download Data</button>
+        </form>
+        <form action="/reset" method="post" style="display:inline;">
+            <button type="submit">Reset All Andons</button>
+        </form>
+    </div>
+
+    <div class="section">
+        <h2>Top 3 Downtime Reasons</h2>
+        <ol>
+            {% for reason, minutes in top_reasons %}
+                <li>
+                    {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% endif %}
+                    {{ reason }} - {{ minutes }} minutes
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    <div class="side-by-side">
+        <div class="left-pane">
+            <h2>Pareto Chart</h2>
+            <canvas id="paretoChart" width="600" height="400"></canvas>
+        </div>
+        <div class="right-pane">
+            <h2>Performance</h2>
+            <p><strong>Total Stopped Time:</strong> {{ total_stopped }} minutes</p>
+            <p><strong>Percentage Stopped:</strong> {{ percent_stopped }}%</p>
+            <p><strong>Percentage Running:</strong> {{ percent_running }}%</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>All Andon Entries</h2>
+        <table>
+            <tr>
+                <th>Timestamp</th>
+                <th>Reason</th>
+                <th>Name</th>
+                <th>Stopped Time (mins)</th>
+            </tr>
+            {% for entry in entries %}
+            <tr>
+                <td>{{ entry.timestamp }}</td>
+                <td>{{ entry.reason }}</td>
+                <td>{{ entry.name }}</td>
+                <td>{{ entry.stopped_time }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const chartData = {{ pareto_data | tojson }};
+        const labels = chartData.labels;
+        const downtimeData = chartData.downtime;
+        const cumulative = chartData.cumulative;
+
+        const ctx = document.getElementById('paretoChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Downtime (min)',
+                        data: downtimeData,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Cumulative %',
+                        data: cumulative,
+                        type: 'line',
+                        borderColor: 'red',
+                        backgroundColor: 'transparent',
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Downtime (min)'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        min: 0,
+                        max: 100,
+                        ticks: {
+                            callback: value => value + '%'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Cumulative %'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
