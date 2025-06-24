@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, session
+from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify, session
 from datetime import datetime
 from collections import Counter
 import os
@@ -7,7 +7,7 @@ import pandas as pd
 import io
 
 app = Flask(__name__)
-app.secret_key = 'something'
+app.secret_key = 'super_secret_key'
 DATA_FILE = 'andon_data.json'
 
 def load_data():
@@ -25,43 +25,41 @@ def save_data(data):
 
 @app.route('/')
 def home():
-    return render_template('home.html')
+    return render_template('index.html')
 
-@app.route('/andon', methods=['GET', 'POST'])
+@app.route('/andon', methods=['POST'])
 def andon():
-    if request.method == 'POST':
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        reason = request.form.get("reason")
-        name = request.form.get("name")
-        stopped_time = request.form.get("stopped_time", 0)
+    data = load_data()
+    reason = request.form['reason']
+    name = request.form['name']
+    stopped_time = int(request.form['stopped_time'])
 
-        try:
-            stopped_time = int(stopped_time)
-        except ValueError:
-            stopped_time = 0
+    data.append({
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'reason': reason,
+        'name': name,
+        'stopped_time': stopped_time
+    })
 
-        entry = {
-            "timestamp": timestamp,
-            "reason": reason,
-            "name": name,
-            "stopped_time": stopped_time
-        }
+    save_data(data)
 
-        data = load_data()
-        data.append(entry)
-        save_data(data)
+    if reason.lower() == 'health and safety':
+        session['health_safety_alert'] = True
+        session['alert_start_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        if reason == "Health and Safety":
-            session["red_alert_active"] = True
-
-        return redirect(url_for('opr'))
-
-    return render_template('andon.html')
+    return redirect(url_for('opr'))
 
 @app.route('/opr')
 def opr():
     data = load_data()
-    return render_template('opr.html', data=data)
+    total_stopped = sum(int(entry.get('stopped_time', 0)) for entry in data)
+    shift_minutes = 480  # example 8 hour shift
+    percent_stopped = round((total_stopped / shift_minutes) * 100, 1)
+    percent_running = 100 - percent_stopped
+
+    return render_template('opr.html', total_stopped=total_stopped,
+                           percent_stopped=percent_stopped,
+                           percent_running=percent_running)
 
 @app.route('/summary')
 def summary():
@@ -82,7 +80,6 @@ def summary():
             stopped_time = 0
 
         total_stopped += stopped_time
-
         entries.append({
             "timestamp": timestamp,
             "reason": reason,
@@ -94,58 +91,51 @@ def summary():
             reasons[reason] = 0
         reasons[reason] += stopped_time
 
-    top_reasons = Counter(reasons).most_common(3)
+    top_reasons = sorted(reasons.items(), key=lambda x: x[1], reverse=True)[:3]
 
-    labels = [reason for reason, _ in top_reasons]
-    downtime = [reasons[reason] for reason in labels]
+    labels = []
+    downtime = []
     cumulative = []
-    total = sum(downtime)
     running_total = 0
 
-    for d in downtime:
-        running_total += d
-        cumulative.append(round((running_total / total) * 100, 2) if total else 0)
+    for reason, time in sorted(reasons.items(), key=lambda x: x[1], reverse=True):
+        labels.append(reason)
+        downtime.append(time)
+        running_total += time
+        cumulative.append(round((running_total / total_stopped) * 100, 1) if total_stopped else 0)
 
-    # Fixed assumed 480-minute shift
-    total_possible_time = 480
-    percent_stopped = round((total_stopped / total_possible_time) * 100, 2)
+    percent_stopped = round((total_stopped / 480) * 100, 1)
     percent_running = 100 - percent_stopped
 
-    pareto_data = {
-        "labels": labels,
-        "downtime": downtime,
-        "cumulative": cumulative
-    }
-
-    return render_template("summary.html",
-        entries=entries,
-        top_reasons=top_reasons,
-        total_stopped=total_stopped,
-        percent_stopped=percent_stopped,
-        percent_running=percent_running,
-        pareto_data=pareto_data,
-        red_alert=session.get("red_alert_active", False)
-    )
+    return render_template('summary.html',
+                           entries=entries,
+                           top_reasons=top_reasons,
+                           total_stopped=total_stopped,
+                           percent_stopped=percent_stopped,
+                           percent_running=percent_running,
+                           pareto_data={"labels": labels, "downtime": downtime, "cumulative": cumulative},
+                           health_safety_alert=session.get('health_safety_alert', False))
 
 @app.route('/reset', methods=['POST'])
 def reset():
     save_data([])
-    session.pop("red_alert_active", None)
+    session.pop('health_safety_alert', None)
+    session.pop('alert_start_time', None)
     return redirect(url_for('summary'))
+
+@app.route('/stop_alert', methods=['POST'])
+def stop_alert():
+    session['health_safety_alert'] = False
+    return jsonify({"status": "stopped"})
 
 @app.route('/download')
 def download():
     data = load_data()
     df = pd.DataFrame(data)
-    csv = df.to_csv(index=False)
-    buffer = io.StringIO(csv)
-    return send_file(io.BytesIO(buffer.getvalue().encode()),
-                     mimetype='text/csv',
-                     as_attachment=True,
-                     download_name='andon_data.csv')
+    output = io.StringIO()
+    df.to_csv(output, index=False)
+    output.seek(0)
+    return send_file(io.BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='andon_data.csv')
 
-@app.route('/stop_alert', methods=['POST'])
-def stop_alert():
-    session["red_alert_active"] = False
-    return redirect(url_for('summary'))
-
+if __name__ == '__main__':
+    app.run(debug=True)
