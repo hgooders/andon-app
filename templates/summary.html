@@ -1,221 +1,100 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Andon Summary</title>
+    <meta http-equiv="refresh" content="10">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #E9F0F5;
-            color: #333;
-            padding: 20px;
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin: 20px auto;
         }
-        h1 {
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
             text-align: center;
-            color: #007BFF;
         }
-        .section {
-            margin-bottom: 30px;
+
+        th {
+            background-color: #f2f2f2;
         }
-        .button-row {
-            text-align: center;
-            margin-bottom: 20px;
+
+        .gold {
+            background-color: gold;
         }
-        button {
-            background-color: #007BFF;
+
+        .silver {
+            background-color: silver;
+        }
+
+        .bronze {
+            background-color: #cd7f32;
+        }
+
+        .stop-alert {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #f44336;
             color: white;
             border: none;
-            padding: 10px 20px;
-            margin: 5px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
-            border-radius: 4px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        table {
-            width: 80%;
-            margin: 0 auto 30px auto;
-            border-collapse: collapse;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        th, td {
-            padding: 12px;
-            border: 1px solid #ddd;
-            text-align: center;
-        }
-        th {
-            background-color: #007BFF;
-            color: white;
-        }
-        canvas {
-            display: block;
-            margin: 0 auto 30px auto;
-        }
-        .side-by-side {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 40px;
-            margin: 30px 0;
-        }
-        .left-pane, .right-pane {
-            flex: 1;
-            min-width: 300px;
-        }
-        .left-pane {
-            text-align: center;
-        }
-        @keyframes flash-red {
-            0% { background-color: #ff0000; }
-            50% { background-color: #ffffff; }
-            100% { background-color: #ff0000; }
         }
     </style>
-    {% if show_red_alert %}
-    <style>
-        body {
-            animation: flash-red 1s infinite;
-        }
-    </style>
-    {% endif %}
 </head>
-<body>
-    <h1>Andon Summary</h1>
-{% if show_red_alert %}
-    <div style="background-color: red; color: white; padding: 20px; text-align: center;">
-        <h2>⚠️ Health & Safety Alert!</h2>
-        <form action="/stop_alert" method="POST">
-            <button type="submit" style="padding: 10px 20px; background-color: white; color: red; font-size: 16px;">
-                Stop Alert
-            </button>
-        </form>
-    </div>
+<body {% if flashing %}style="background-color: red;"{% endif %}>
 
-    <script>
-        // Make entire screen flash red
-        let flashInterval = setInterval(() => {
-            document.body.style.backgroundColor = 
-                document.body.style.backgroundColor === "red" ? "#E9F0F5" : "red";
-        }, 1000);
-    </script>
-{% endif %}
+    <h1 style="text-align:center;">Andon Summary</h1>
 
-    <div class="button-row">
-        <form action="/download" method="get" style="display:inline;">
-            <button type="submit">Download Data</button>
-        </form>
-        <form action="/reset" method="post" style="display:inline;">
-            <button type="submit">Reset All Andons</button>
-        </form>
-        {% if show_red_alert %}
-        <form method="post" action="/stop_alert" style="display:inline;">
-            <button type="submit">Stop Alert</button>
-        </form>
-        {% endif %}
-    </div>
+    <table>
+        <tr>
+            <th>Timestamp</th>
+            <th>Reason</th>
+            <th>Name</th>
+            <th>Stopped Time (minutes)</th>
+        </tr>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ entry.timestamp }}</td>
+            <td>{{ entry.reason }}</td>
+            <td>{{ entry.name }}</td>
+            <td>{{ entry.stopped_time }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 
-    <div class="section">
-        <h2>Top 3 Downtime Reasons</h2>
-        <ol>
-    {% for reason, count in top_reasons %}
-        <li>
-            {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% endif %}
-            {{ reason }} - {{ count }} minutes
-        </li>
-    {% endfor %}
-</ol>
+    <h2 style="text-align:center;">Top 3 Downtime Reasons</h2>
+    <table>
+        <tr>
+            <th>Rank</th>
+            <th>Reason</th>
+            <th>Total Minutes</th>
+        </tr>
+        {% for reason, minutes in top_reasons %}
+        <tr class="{% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% endif %}">
+            <td>{{ loop.index }}</td>
+            <td>{{ reason }}</td>
+            <td>{{ minutes }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 
-    </div>
+    <h2 style="text-align:center;">Line Status</h2>
+    <p style="text-align:center;">Stopped: {{ percent_stopped }}%</p>
+    <p style="text-align:center;">Running: {{ percent_running }}%</p>
 
-    <div class="side-by-side">
-        <div class="left-pane">
-            <h2>Pareto Chart</h2>
-            <canvas id="paretoChart" width="600" height="400"></canvas>
-        </div>
-        <div class="right-pane">
-            <h2>Performance</h2>
-            <p><strong>Total Stopped Time:</strong> {{ total_stopped }} minutes</p>
-            <p><strong>Percentage Stopped:</strong> {{ percent_stopped }}%</p>
-            <p><strong>Percentage Running:</strong> {{ percent_running }}%</p>
-     
-    </div>
+    {% if flashing %}
+    <form method="POST" action="{{ url_for('stop_alert') }}">
+        <button class="stop-alert">Stop Alert</button>
+    </form>
+    {% endif %}
 
-    <div class="section">
-        <h2>All Andon Entries</h2>
-        <table>
-            <tr>
-                <th>Timestamp</th>
-                <th>Reason</th>
-                <th>Name</th>
-                <th>Stopped Time (mins)</th>
-            </tr>
-            {% for entry in entries %}
-            <tr>
-                <td>{{ entry.timestamp }}</td>
-                <td>{{ entry.reason }}</td>
-                <td>{{ entry.name }}</td>
-                <td>{{ entry.stopped_time }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
+    <p style="text-align:center;"><a href="{{ url_for('home') }}">Back to Home</a></p>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const chartData = {{ pareto_data | tojson }};
-        const labels = chartData.labels;
-        const downtimeData = chartData.downtime;
-        const cumulative = chartData.cumulative;
-
-        const ctx = document.getElementById('paretoChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Downtime (min)',
-                        data: downtimeData,
-                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                        yAxisID: 'y',
-                    },
-                    {
-                        label: 'Cumulative %',
-                        data: cumulative,
-                        type: 'line',
-                        borderColor: 'red',
-                        backgroundColor: 'transparent',
-                        yAxisID: 'y1',
-                    }
-                ]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Downtime (min)'
-                        }
-                    },
-                    y1: {
-                        beginAtZero: true,
-                        position: 'right',
-                        min: 0,
-                        max: 100,
-                        ticks: {
-                            callback: value => value + '%'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Cumulative %'
-                        }
-                    }
-                }
-            }
-        });
-    </script>
 </body>
 </html>
+
