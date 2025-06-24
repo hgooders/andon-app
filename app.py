@@ -61,23 +61,20 @@ def opr():
 def stop_alert():
     session.pop('alert_until', None)
     return redirect(url_for('opr'))
-
 @app.route('/summary')
 def summary():
     data = load_data()
     total_stopped = sum(int(e['stopped_time']) for e in data)
+
     reasons_count = Counter()
     for e in data:
         reasons_count[e['reason']] += int(e['stopped_time'])
-from collections import defaultdict
 
-# Calculate total stopped time for each reason
-reason_totals = defaultdict(int)
-for entry in entries:
-    reason_totals[entry['reason']] += int(entry['stopped_time'])
+    from collections import defaultdict
+    reason_totals = defaultdict(int)
+    for entry in data:
+        reason_totals[entry['reason']] += int(entry['stopped_time'])
 
-# Get top 3 reasons by total stopped time
-    # Get top 3 reasons by total stopped time
     top_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)[:3]
 
     shift_minutes = 480
@@ -92,7 +89,11 @@ for entry in entries:
         running += t
         cum.append(round((running / total_stopped) * 100, 1) if total_stopped else 0)
 
-    pareto_data = {"labels": labels, "downtime": downtime, "cumulative": cum}
+    pareto_data = {
+        "labels": labels,
+        "downtime": downtime,
+        "cumulative": cum
+    }
 
     return render_template('summary.html',
                            entries=data,
