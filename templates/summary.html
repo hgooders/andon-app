@@ -69,6 +69,11 @@
         }
     </style>
 </head>
+    {% if flashing %}
+<audio id="alarmSound" autoplay loop>
+  <source src="{{ url_for('static', filename='alarm.mp3') }}" type="audio/mpeg">
+</audio>
+{% endif %}
 <body>
     <h1>Andon Summary</h1>
 
