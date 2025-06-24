@@ -48,6 +48,8 @@ def andon():
         "name": name,
         "stopped_time": stopped_time
     }
+if reason == "Health and Safety":
+    session["red_alert_active"] = True
 
     data = load_data()
     data.append(new_entry)
