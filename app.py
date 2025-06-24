@@ -64,12 +64,14 @@ def stop_alert():
 @app.route('/summary')
 def summary():
     data = load_data()
-    total_stopped = sum(int(entry['stopped_time']) for entry in data)
 
-    from collections import Counter, defaultdict
-    reasons_count = Counter()
-    for e in data:
-        reasons_count[e['reason']] += int(e['stopped_time'])
+    total_stopped = sum(int(entry['stopped_time']) for entry in data)
+    shift_minutes = 420
+    percent_stopped = round((total_stopped / shift_minutes) * 100, 1)
+    percent_running = 100 - percent_stopped
+
+    # Top 3 reasons by total stopped time
+    from collections import defaultdict, Counter
 
     reason_totals = defaultdict(int)
     for entry in data:
@@ -77,9 +79,10 @@ def summary():
 
     top_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)[:3]
 
-    shift_minutes = 420
-    percent_stopped = round((total_stopped / shift_minutes) * 100, 1)
-    percent_running = 100 - percent_stopped
+    # Prepare pareto chart data
+    reasons_count = Counter()
+    for e in data:
+        reasons_count[e['reason']] += int(e['stopped_time'])
 
     labels = list(reasons_count.keys())
     downtime = list(reasons_count.values())
@@ -91,17 +94,17 @@ def summary():
 
     pareto_data = {"labels": labels, "downtime": downtime, "cumulative": cum}
 
-    flashing = session.get('alert_active', False)
-
-    return render_template("summary.html",
+    return render_template('summary.html',
         entries=data,
         total_stopped=total_stopped,
         percent_stopped=percent_stopped,
         percent_running=percent_running,
         top_reasons=top_reasons,
         pareto_data=pareto_data,
-        flashing=flashing
+        flashing=session.get('flashing', False)  # ✅ Add this so the flashing works
     )
+
+
 
 
 @app.route('/andon', methods=['POST'])
