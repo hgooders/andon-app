@@ -93,7 +93,7 @@ def summary():
         cum.append(round((running / total_stopped) * 100, 1) if total_stopped else 0)
 
     pareto_data = {"labels": labels, "downtime": downtime, "cumulative": cum}
-
+    flashing = session.get('flashing', False)
     return render_template('summary.html',
     entries=data,
     total_stopped=total_stopped,
