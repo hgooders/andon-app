@@ -96,7 +96,8 @@ def summary():
     }
 
    flashing = session.get('alert_active', False)
-return render_template("summary.html",
+
+   return render_template("summary.html",
     entries=data,
     total_stopped=total_stopped,
     percent_stopped=percent_stopped,
