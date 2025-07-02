@@ -64,44 +64,45 @@ def stop_alert():
 @app.route('/summary')
 def summary():
     data = load_data()
+
+    from collections import Counter, defaultdict
+    import time
+    from flask import session
+
+    # Total stopped time
     total_stopped = sum(int(entry['stopped_time']) for entry in data)
-    shift_minutes = 480
+    shift_minutes = 420
     percent_stopped = round((total_stopped / shift_minutes) * 100, 1)
     percent_running = 100 - percent_stopped
 
-    from collections import defaultdict
+    # Count and sort top reasons by stopped time
+    reasons_count = Counter()
     reason_totals = defaultdict(int)
     for entry in data:
-        reason_totals[entry['reason']] += int(entry['stopped_time'])
+        reason = entry['reason']
+        reasons_count[reason] += 1
+        reason_totals[reason] += int(entry['stopped_time'])
 
     top_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)[:3]
 
-    from collections import Counter
-    reasons_count = Counter()
-    for e in data:
-        reasons_count[e['reason']] += int(e['stopped_time'])
-
-    sorted_items = sorted(reasons_count.items(), key=lambda x: x[1], reverse=True)
-    labels = [item[0] for item in sorted_items]
-    downtime = [item[1] for item in sorted_items]
+    # Pareto chart data (highest to lowest)
+    sorted_reasons = sorted(reason_totals.items(), key=lambda x: x[1], reverse=True)
+    labels = [reason for reason, _ in sorted_reasons]
+    downtime = [reason_totals[reason] for reason in labels]
     total_time = sum(downtime)
-
     cumulative = []
     running = 0
-    for value in downtime:
-        running += value
-        cumulative.append(round(running / total_time * 100, 2) if total_time else 0)
+    for t in downtime:
+        running += t
+        cumulative.append(round((running / total_time) * 100, 1) if total_time else 0)
 
-    pareto_data = {
-        "labels": labels,
-        "downtime": downtime,
-        "cumulative": cumulative
-    }
+    pareto_data = {"labels": labels, "downtime": downtime, "cumulative": cumulative}
 
-flashing = session.get('alert_active', False)
+    # Red flashing alert status
+    flashing = session.get('alert_active', False)
 
-from collections import Counter
-top_users = Counter(entry['name'] for entry in data if 'name' in entry).most_common(3)
+    # Top 3 users
+    top_users = Counter(entry['name'] for entry in data if 'name' in entry).most_common(3)
 
     return render_template(
         'summary.html',
@@ -111,7 +112,7 @@ top_users = Counter(entry['name'] for entry in data if 'name' in entry).most_com
         percent_running=percent_running,
         top_reasons=top_reasons,
         pareto_data=pareto_data,
-        flashing=flashing 
+        flashing=flashing,
         top_users=top_users
     )
 
