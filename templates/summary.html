@@ -113,6 +113,22 @@
             <p><strong>Total Stopped Time:</strong> {{ total_stopped }} minutes</p>
             <p><strong>Percentage Stopped:</strong> {{ percent_stopped }}%</p>
             <p><strong>Percentage Running:</strong> {{ percent_running }}%</p>
+           <div class="section">
+    <h2>Top 3 People Pulling Andons</h2>
+    <ul>
+        {% for person, count in top_users %}
+            <li>
+                {% if loop.index == 1 %}🥇
+                {% elif loop.index == 2 %}🥈
+                {% elif loop.index == 3 %}🥉
+                {% endif %}
+                {{ person }} – {{ count }} andons
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+ 
         </div>
     </div>
 
