@@ -100,7 +100,7 @@ def summary():
 
     flashing = session.get('alert_active', False)
 from collections import Counter
-top_users = Counter(entry['name'] for entry in entries).most_common(3)
+top_users = Counter(entry['name'] for entry in data if 'name' in entry).most_common(3)
 
 
     return render_template(
@@ -111,7 +111,8 @@ top_users = Counter(entry['name'] for entry in entries).most_common(3)
         percent_running=percent_running,
         top_reasons=top_reasons,
         pareto_data=pareto_data,
-        flashing=flashing  # This lets the template know whether to flash
+        flashing=flashing 
+        top_users=top_users)
     )
 
 
