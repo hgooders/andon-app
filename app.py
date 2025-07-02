@@ -99,6 +99,9 @@ def summary():
     }
 
     flashing = session.get('alert_active', False)
+from collections import Counter
+top_users = Counter(entry['name'] for entry in entries).most_common(3)
+
 
     return render_template(
         'summary.html',
